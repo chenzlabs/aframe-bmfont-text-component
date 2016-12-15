@@ -85,7 +85,7 @@
 	    },
 	    fntImage: {
 	      type: 'string',
-	      default: 'https://cdn.rawgit.com/bryik/aframe-bmfont-text-component/aa0655cf90f646e12c40ab4708ea90b4686cfb45/assets/DejaVu-sdf.png'
+	      default: undefined
 	    },
 	    mode: {
 	      type: 'string',
@@ -121,7 +121,7 @@
 	    // Use fontLoader utility to load 'fnt' and texture
 	    fontLoader({
 	      font: data.fnt,
-	      image: data.fntImage
+	      image: (data.fntImage && data.fntImage.length) ? data.fntImage : data.fnt.replace('.fnt', '.png')
 	    }, start);
 
 	    function start (font, texture) {
@@ -4451,10 +4451,10 @@
 	    text: 'bmfont-text.text',
 	    width: 'bmfont-text.width',
 	    align: 'bmfont-text.align',
-	    letterSpacing: 'bmfont-text.letterSpacing',
-	    lineHeight: 'bmfont-text.lineHeight',
+	    letterspacing: 'bmfont-text.letterSpacing',
+	    lineheight: 'bmfont-text.lineHeight',
 	    fnt: 'bmfont-text.fnt',
-	    fntImage: 'bmfont-text.fntImage',
+	    fntimage: 'bmfont-text.fntImage',
 	    mode: 'bmfont-text.mode',
 	    color: 'bmfont-text.color',
 	    opacity: 'bmfont-text.opacity',
