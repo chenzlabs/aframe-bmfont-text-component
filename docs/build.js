@@ -15,7 +15,7 @@ var meshMixin = AFRAME.primitives.getMeshMixin();
 
 AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
   defaultComponents: {
-    'bmfont-text': {}
+    'bmfont-text': {anchor: 'align'}
   },
   mappings: {
     text: 'bmfont-text.text',
@@ -27,7 +27,9 @@ AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
     fntImage: 'bmfont-text.fntImage',
     mode: 'bmfont-text.mode',
     color: 'bmfont-text.color',
-    opacity: 'bmfont-text.opacity'
+    opacity: 'bmfont-text.opacity',
+    anchor: 'bmfont-text.anchor',
+    textscale: 'bmfont-text.textscale',
   }
 }));
 
@@ -86,6 +88,14 @@ AFRAME.registerComponent('bmfont-text', {
     opacity: {
       type: 'number',
       default: '1.0'
+    },
+    anchor: {
+      type: 'string',
+      default: 'left' // for compatibility; if 'align', null or undefined, same as align
+    },
+    textscale: {
+      type: 'number',
+      default: 0.005
     }
   },
 
@@ -131,14 +141,21 @@ AFRAME.registerComponent('bmfont-text', {
         opacity: data.opacity
       }));
 
+      var textScale = -data.textscale;
+
       var text = new THREE.Mesh(geometry, material);
 
       // Rotate so text faces the camera
       text.rotation.y = Math.PI;
 
       // Scale text down
-      text.scale.multiplyScalar(-0.005);
+      text.scale.multiplyScalar(textScale);
 
+      // Position based on anchor value
+      var anchor = data.anchor === 'align' ? data.align : data.anchor || data.align;
+      if (anchor === 'center' || anchor === 'right') {
+          text.position.x += data.width * textScale * (anchor === 'center' ? 0.5 : 1);
+      }
       // Register text mesh under entity's object3DMap
       el.setObject3D('bmfont-text', text);
     }
@@ -170,7 +187,7 @@ function fontLoader (opt, cb) {
   });
 }
 
-},{"./extras/text-primitive.js":2,"./lib/shaders/sdf":4,"load-bmfont":22,"three-bmfont-text":31}],4:[function(require,module,exports){
+},{"./extras/text-primitive.js":2,"./lib/shaders/sdf":4,"load-bmfont":10,"three-bmfont-text":26}],4:[function(require,module,exports){
 var assign = require('object-assign')
 
 module.exports = function createSDFShader (opt) {
@@ -235,7 +252,7 @@ module.exports = function createSDFShader (opt) {
   }, opt)
 }
 
-},{"object-assign":24}],5:[function(require,module,exports){
+},{"object-assign":25}],5:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.AFRAME = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -57053,7 +57070,7 @@ module.exports = WebVRPolyfill;
 },{}],20:[function(_dereq_,module,exports){
 module.exports={
   "name": "aframe",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Building blocks for the VR Web",
   "homepage": "https://aframe.io/",
   "main": "dist/aframe.js",
@@ -57066,8 +57083,8 @@ module.exports={
     "dist:max": "npm run browserify -s -- --debug | exorcist dist/aframe.js.map > dist/aframe.js",
     "dist:min": "npm run browserify -s -- --debug -p [minifyify --map aframe.min.js.map --output dist/aframe.min.js.map] -o dist/aframe.min.js",
     "dist:release": "npm run dist:release:min && npm run dist:release:max",
-    "dist:release:max": "npm run browserify -s -- --debug | exorcist dist/aframe-v0.3.0.js.map > dist/aframe-v0.3.0.js",
-    "dist:release:min": "npm run browserify -s -- --debug -p [minifyify --map aframe-v0.3.0.min.js.map --output dist/aframe-v0.3.0.min.js.map] -o dist/aframe-v0.3.0.min.js",
+    "dist:release:max": "npm run browserify -s -- --debug | exorcist dist/aframe-v0.3.2.js.map > dist/aframe-v0.3.2.js",
+    "dist:release:min": "npm run browserify -s -- --debug -p [minifyify --map aframe-v0.3.2.min.js.map --output dist/aframe-v0.3.2.min.js.map] -o dist/aframe-v0.3.2.min.js",
     "gh-pages": "npm run ghpages",
     "ghpages": "node ./scripts/gh-pages",
     "lint": "semistandard -v | snazzy",
@@ -57085,12 +57102,13 @@ module.exports={
   "repository": "aframevr/aframe",
   "license": "MIT",
   "dependencies": {
+    "browserify-css": "^0.8.2",
     "debug": "^2.2.0",
     "deep-assign": "^2.0.0",
     "document-register-element": "dmarcos/document-register-element#8ccc532b7",
-    "promise-polyfill": "^3.1.0",
     "object-assign": "^4.0.1",
     "present": "0.0.6",
+    "promise-polyfill": "^3.1.0",
     "style-attr": "^1.0.2",
     "three": "^0.76.1",
     "tween.js": "^15.0.0",
@@ -57098,7 +57116,6 @@ module.exports={
   },
   "devDependencies": {
     "browserify": "^13.1.0",
-    "browserify-css": "^0.8.2",
     "browserify-derequire": "^0.9.4",
     "browserify-istanbul": "^2.0.0",
     "budo": "^8.1.0",
@@ -63116,13 +63133,14 @@ module.exports = registerElement('a-scene', {
      */
     render: {
       value: function (time) {
+        var effect = this.effect;
         var timeDelta = time - this.time;
 
         if (this.isPlaying) { this.tick(time, timeDelta); }
-        this.effect.render(this.object3D, this.camera);
 
+        this.animationFrameID = effect.requestAnimationFrame(this.render);
+        effect.render(this.object3D, this.camera);
         this.time = time;
-        this.animationFrameID = window.requestAnimationFrame(this.render);
       },
       writable: true
     }
@@ -66600,43 +66618,33 @@ THREE.VRControls = function ( object, onError ) {
  * WebVR Spec: http://mozvr.github.io/webvr-spec/webvr.html
  *
  * Firefox: http://mozvr.com/downloads/
- * Chromium: https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list
+ * Chromium: https://webvr.info/get-chrome
  *
  */
 
 THREE.VREffect = function ( renderer, onError ) {
 
-	var isWebVR1 = true;
-
 	var vrDisplay, vrDisplays;
 	var eyeTranslationL = new THREE.Vector3();
 	var eyeTranslationR = new THREE.Vector3();
 	var renderRectL, renderRectR;
-	var eyeFOVL, eyeFOVR;
+
+	var frameData = null;
+	if ( 'VRFrameData' in window ) {
+
+		frameData = new VRFrameData();
+
+	}
 
 	function gotVRDisplays( displays ) {
 
 		vrDisplays = displays;
 
-		for ( var i = 0; i < displays.length; i ++ ) {
+		if ( displays.length > 0 ) {
 
-			if ( 'VRDisplay' in window && displays[ i ] instanceof VRDisplay ) {
+			vrDisplay = displays[ 0 ];
 
-				vrDisplay = displays[ i ];
-				isWebVR1 = true;
-				break; // We keep the first we encounter
-
-			} else if ( 'HMDVRDevice' in window && displays[ i ] instanceof HMDVRDevice ) {
-
-				vrDisplay = displays[ i ];
-				isWebVR1 = false;
-				break; // We keep the first we encounter
-
-			}
-
-		}
-
-		if ( vrDisplay === undefined ) {
+		} else {
 
 			if ( onError ) onError( 'HMD not available' );
 
@@ -66648,11 +66656,6 @@ THREE.VREffect = function ( renderer, onError ) {
 
 		navigator.getVRDisplays().then( gotVRDisplays );
 
-	} else if ( navigator.getVRDevices ) {
-
-		// Deprecated API.
-		navigator.getVRDevices().then( gotVRDisplays );
-
 	}
 
 	//
@@ -66663,6 +66666,7 @@ THREE.VREffect = function ( renderer, onError ) {
 	var scope = this;
 
 	var rendererSize = renderer.getSize();
+	var rendererUpdateStyle = false;
 	var rendererPixelRatio = renderer.getPixelRatio();
 
 	this.getVRDisplay = function () {
@@ -66677,29 +66681,21 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	};
 
-	this.setSize = function ( width, height ) {
+	this.setSize = function ( width, height, updateStyle ) {
 
 		rendererSize = { width: width, height: height };
+		rendererUpdateStyle = updateStyle;
 
 		if ( scope.isPresenting ) {
 
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
 			renderer.setPixelRatio( 1 );
-
-			if ( isWebVR1 ) {
-
-				renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
-
-			} else {
-
-				renderer.setSize( eyeParamsL.renderRect.width * 2, eyeParamsL.renderRect.height, false );
-
-			}
+			renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
 
 		} else {
 
 			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( width, height );
+			renderer.setSize( width, height, updateStyle );
 
 		}
 
@@ -66717,34 +66713,21 @@ THREE.VREffect = function ( renderer, onError ) {
 	function onFullscreenChange() {
 
 		var wasPresenting = scope.isPresenting;
-		scope.isPresenting = vrDisplay !== undefined && ( vrDisplay.isPresenting || ( ! isWebVR1 && document[ fullscreenElement ] instanceof window.HTMLElement ) );
+		scope.isPresenting = vrDisplay !== undefined && vrDisplay.isPresenting;
 
 		if ( scope.isPresenting ) {
 
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
-			var eyeWidth, eyeHeight;
+			var eyeWidth = eyeParamsL.renderWidth;
+			var eyeHeight = eyeParamsL.renderHeight;
 
-			if ( isWebVR1 ) {
+			var layers = vrDisplay.getLayers();
+			if ( layers.length ) {
 
-				eyeWidth = eyeParamsL.renderWidth;
-				eyeHeight = eyeParamsL.renderHeight;
+				var layer = layers[0];
 
-				if ( vrDisplay.getLayers ) {
-
-					var layers = vrDisplay.getLayers();
-					if ( layers.length ) {
-
-						leftBounds = layers[0].leftBounds || [ 0.0, 0.0, 0.5, 1.0 ];
-						rightBounds = layers[0].rightBounds || [ 0.5, 0.0, 0.5, 1.0 ];
-
-					}
-
-				}
-
-			} else {
-
-				eyeWidth = eyeParamsL.renderRect.width;
-				eyeHeight = eyeParamsL.renderRect.height;
+				leftBounds = layer.leftBounds !== null && layer.leftBounds.length === 4 ? layer.leftBounds : [ 0.0, 0.0, 0.5, 1.0 ];
+				rightBounds = layer.rightBounds !== null && layer.rightBounds.length === 4 ? layer.rightBounds : [ 0.5, 0.0, 0.5, 1.0 ];
 
 			}
 
@@ -66761,32 +66744,9 @@ THREE.VREffect = function ( renderer, onError ) {
 		} else if ( wasPresenting ) {
 
 			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( rendererSize.width, rendererSize.height );
+			renderer.setSize( rendererSize.width, rendererSize.height, rendererUpdateStyle );
 
 		}
-
-	}
-
-	if ( canvas.requestFullscreen ) {
-
-		requestFullscreen = 'requestFullscreen';
-		fullscreenElement = 'fullscreenElement';
-		exitFullscreen = 'exitFullscreen';
-		document.addEventListener( 'fullscreenchange', onFullscreenChange, false );
-
-	} else if ( canvas.mozRequestFullScreen ) {
-
-		requestFullscreen = 'mozRequestFullScreen';
-		fullscreenElement = 'mozFullScreenElement';
-		exitFullscreen = 'mozCancelFullScreen';
-		document.addEventListener( 'mozfullscreenchange', onFullscreenChange, false );
-
-	} else {
-
-		requestFullscreen = 'webkitRequestFullscreen';
-		fullscreenElement = 'webkitFullscreenElement';
-		exitFullscreen = 'webkitExitFullscreen';
-		document.addEventListener( 'webkitfullscreenchange', onFullscreenChange, false );
 
 	}
 
@@ -66810,31 +66770,13 @@ THREE.VREffect = function ( renderer, onError ) {
 
 			}
 
-			if ( isWebVR1 ) {
+			if ( boolean ) {
 
-				if ( boolean ) {
-
-					resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
-
-				} else {
-
-					resolve( vrDisplay.exitPresent() );
-
-				}
+				resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
 
 			} else {
 
-				if ( canvas[ requestFullscreen ] ) {
-
-					canvas[ boolean ? requestFullscreen : exitFullscreen ]( { vrDisplay: vrDisplay } );
-					resolve();
-
-				} else {
-
-					console.error( 'No compatible requestFullscreen method found.' );
-					reject( new Error( 'No compatible requestFullscreen method found.' ) );
-
-				}
+				resolve( vrDisplay.exitPresent() );
 
 			}
 
@@ -66856,7 +66798,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.requestAnimationFrame = function ( f ) {
 
-		if ( isWebVR1 && vrDisplay !== undefined ) {
+		if ( vrDisplay !== undefined ) {
 
 			return vrDisplay.requestAnimationFrame( f );
 
@@ -66870,7 +66812,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.cancelAnimationFrame = function ( h ) {
 
-		if ( isWebVR1 && vrDisplay !== undefined ) {
+		if ( vrDisplay !== undefined ) {
 
 			vrDisplay.cancelAnimationFrame( h );
 
@@ -66884,7 +66826,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.submitFrame = function () {
 
-		if ( isWebVR1 && vrDisplay !== undefined && scope.isPresenting ) {
+		if ( vrDisplay !== undefined && scope.isPresenting ) {
 
 			vrDisplay.submitFrame();
 
@@ -66918,21 +66860,8 @@ THREE.VREffect = function ( renderer, onError ) {
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
 			var eyeParamsR = vrDisplay.getEyeParameters( 'right' );
 
-			if ( isWebVR1 ) {
-
-				eyeTranslationL.fromArray( eyeParamsL.offset );
-				eyeTranslationR.fromArray( eyeParamsR.offset );
-				eyeFOVL = eyeParamsL.fieldOfView;
-				eyeFOVR = eyeParamsR.fieldOfView;
-
-			} else {
-
-				eyeTranslationL.copy( eyeParamsL.eyeTranslation );
-				eyeTranslationR.copy( eyeParamsR.eyeTranslation );
-				eyeFOVL = eyeParamsL.recommendedFieldOfView;
-				eyeFOVR = eyeParamsR.recommendedFieldOfView;
-
-			}
+			eyeTranslationL.fromArray( eyeParamsL.offset );
+			eyeTranslationR.fromArray( eyeParamsR.offset );
 
 			if ( Array.isArray( scene ) ) {
 
@@ -66964,16 +66893,14 @@ THREE.VREffect = function ( renderer, onError ) {
 
 			} else  {
 
+				renderer.setRenderTarget( null );
 				renderer.setScissorTest( true );
-			
+
 			}
 
 			if ( renderer.autoClear || forceClear ) renderer.clear();
 
 			if ( camera.parent === null ) camera.updateMatrixWorld();
-
-			cameraL.projectionMatrix = fovToProjection( eyeFOVL, true, camera.near, camera.far );
-			cameraR.projectionMatrix = fovToProjection( eyeFOVR, true, camera.near, camera.far );
 
 			camera.matrixWorld.decompose( cameraL.position, cameraL.quaternion, cameraL.scale );
 			camera.matrixWorld.decompose( cameraR.position, cameraR.quaternion, cameraR.scale );
@@ -66982,6 +66909,23 @@ THREE.VREffect = function ( renderer, onError ) {
 			cameraL.translateOnAxis( eyeTranslationL, scale );
 			cameraR.translateOnAxis( eyeTranslationR, scale );
 
+			if ( vrDisplay.getFrameData ) {
+
+				vrDisplay.depthNear = camera.near;
+				vrDisplay.depthFar = camera.far;
+
+				vrDisplay.getFrameData( frameData );
+
+				cameraL.projectionMatrix.elements = frameData.leftProjectionMatrix;
+				cameraR.projectionMatrix.elements = frameData.rightProjectionMatrix;
+
+			} else {
+
+				cameraL.projectionMatrix = fovToProjection( eyeParamsL.fieldOfView, true, camera.near, camera.far );
+				cameraR.projectionMatrix = fovToProjection( eyeParamsR.fieldOfView, true, camera.near, camera.far );
+
+
+			}
 
 			// render left eye
 			if ( renderTarget ) {
@@ -67019,11 +66963,11 @@ THREE.VREffect = function ( renderer, onError ) {
 				renderer.setRenderTarget( null );
 
 			} else {
-				
+
 				renderer.setScissorTest( false );
 
 			}
-			
+
 			if ( autoUpdate ) {
 
 				scene.autoUpdate = true;
@@ -67121,6 +67065,7 @@ THREE.VREffect = function ( renderer, onError ) {
 	}
 
 };
+
 },{}],126:[function(_dereq_,module,exports){
 window.glStats = function () {
 
@@ -67985,152 +67930,6 @@ module.exports = getWakeLock();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],6:[function(require,module,exports){
-var str = Object.prototype.toString
-
-module.exports = anArray
-
-function anArray(arr) {
-  return (
-       arr.BYTES_PER_ELEMENT
-    && str.call(arr.buffer) === '[object ArrayBuffer]'
-    || Array.isArray(arr)
-  )
-}
-
-},{}],7:[function(require,module,exports){
-module.exports = function numtype(num, def) {
-	return typeof num === 'number'
-		? num 
-		: (typeof def === 'number' ? def : 0)
-}
-},{}],8:[function(require,module,exports){
-'use strict'
-
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-function init () {
-  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  for (var i = 0, len = code.length; i < len; ++i) {
-    lookup[i] = code[i]
-    revLookup[code.charCodeAt(i)] = i
-  }
-
-  revLookup['-'.charCodeAt(0)] = 62
-  revLookup['_'.charCodeAt(0)] = 63
-}
-
-init()
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-
-  // base64 is 4/3 + up to two characters of the original data
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],9:[function(require,module,exports){
-var Buffer = require('buffer').Buffer; // for use with browserify
-
-module.exports = function (a, b) {
-    if (!Buffer.isBuffer(a)) return undefined;
-    if (!Buffer.isBuffer(b)) return undefined;
-    if (typeof a.equals === 'function') return a.equals(b);
-    if (a.length !== b.length) return false;
-    
-    for (var i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-    
-    return true;
-};
-
-},{"buffer":10}],10:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -69923,148 +69722,123 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":8,"ieee754":16,"isarray":11}],11:[function(require,module,exports){
-var toString = {}.toString;
+},{"base64-js":7,"ieee754":8,"isarray":9}],7:[function(require,module,exports){
+'use strict'
 
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
 
-},{}],12:[function(require,module,exports){
-module.exports = function(dtype) {
-  switch (dtype) {
-    case 'int8':
-      return Int8Array
-    case 'int16':
-      return Int16Array
-    case 'int32':
-      return Int32Array
-    case 'uint8':
-      return Uint8Array
-    case 'uint16':
-      return Uint16Array
-    case 'uint32':
-      return Uint32Array
-    case 'float32':
-      return Float32Array
-    case 'float64':
-      return Float64Array
-    case 'array':
-      return Array
-    case 'uint8_clamped':
-      return Uint8ClampedArray
-  }
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
 }
 
-},{}],13:[function(require,module,exports){
-/*eslint new-cap:0*/
-var dtype = require('dtype')
-module.exports = flattenVertexData
-function flattenVertexData (data, output, offset) {
-  if (!data) throw new TypeError('must specify data as first parameter')
-  offset = +(offset || 0) | 0
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
 
-  if (Array.isArray(data) && Array.isArray(data[0])) {
-    var dim = data[0].length
-    var length = data.length * dim
-
-    // no output specified, create a new typed array
-    if (!output || typeof output === 'string') {
-      output = new (dtype(output || 'float32'))(length + offset)
-    }
-
-    var dstLength = output.length - offset
-    if (length !== dstLength) {
-      throw new Error('source length ' + length + ' (' + dim + 'x' + data.length + ')' +
-        ' does not match destination length ' + dstLength)
-    }
-
-    for (var i = 0, k = offset; i < data.length; i++) {
-      for (var j = 0; j < dim; j++) {
-        output[k++] = data[i][j]
-      }
-    }
-  } else {
-    if (!output || typeof output === 'string') {
-      // no output, create a new one
-      var Ctor = dtype(output || 'float32')
-      if (offset === 0) {
-        output = new Ctor(data)
-      } else {
-        output = new Ctor(data.length + offset)
-        output.set(data, offset)
-      }
-    } else {
-      // store output in existing array
-      output.set(data, offset)
-    }
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
   }
 
-  return output
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
 }
 
-},{"dtype":12}],14:[function(require,module,exports){
-var isFunction = require('is-function')
-
-module.exports = forEach
-
-var toString = Object.prototype.toString
-var hasOwnProperty = Object.prototype.hasOwnProperty
-
-function forEach(list, iterator, context) {
-    if (!isFunction(iterator)) {
-        throw new TypeError('iterator must be a function')
-    }
-
-    if (arguments.length < 3) {
-        context = this
-    }
-    
-    if (toString.call(list) === '[object Array]')
-        forEachArray(list, iterator, context)
-    else if (typeof list === 'string')
-        forEachString(list, iterator, context)
-    else
-        forEachObject(list, iterator, context)
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return b64.length * 3 / 4 - placeHoldersCount(b64)
 }
 
-function forEachArray(array, iterator, context) {
-    for (var i = 0, len = array.length; i < len; i++) {
-        if (hasOwnProperty.call(array, i)) {
-            iterator.call(context, array[i], i, array)
-        }
-    }
+function toByteArray (b64) {
+  var i, j, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr(len * 3 / 4 - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
 }
 
-function forEachString(string, iterator, context) {
-    for (var i = 0, len = string.length; i < len; i++) {
-        // no such thing as a sparse string.
-        iterator.call(context, string.charAt(i), i, string)
-    }
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
 }
 
-function forEachObject(object, iterator, context) {
-    for (var k in object) {
-        if (hasOwnProperty.call(object, k)) {
-            iterator.call(context, object[k], k, object)
-        }
-    }
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
 }
 
-},{"is-function":20}],15:[function(require,module,exports){
-(function (global){
-if (typeof window !== "undefined") {
-    module.exports = window;
-} else if (typeof global !== "undefined") {
-    module.exports = global;
-} else if (typeof self !== "undefined"){
-    module.exports = self;
-} else {
-    module.exports = {};
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -70150,20 +69924,1272 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],17:[function(require,module,exports){
-module.exports = function compile(property) {
-	if (!property || typeof property !== 'string')
-		throw new Error('must specify property for indexof search')
+},{}],9:[function(require,module,exports){
+var toString = {}.toString;
 
-	return new Function('array', 'value', 'start', [
-		'start = start || 0',
-		'for (var i=start; i<array.length; i++)',
-		'  if (array[i]["' + property +'"] === value)',
-		'      return i',
-		'return -1'
-	].join('\n'))
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+},{}],10:[function(require,module,exports){
+(function (Buffer){
+var xhr = require('xhr')
+var noop = function(){}
+var parseASCII = require('parse-bmfont-ascii')
+var parseXML = require('parse-bmfont-xml')
+var readBinary = require('parse-bmfont-binary')
+var isBinaryFormat = require('./lib/is-binary')
+var xtend = require('xtend')
+
+var xml2 = (function hasXML2() {
+  return window.XMLHttpRequest && "withCredentials" in new XMLHttpRequest
+})()
+
+module.exports = function(opt, cb) {
+  cb = typeof cb === 'function' ? cb : noop
+
+  if (typeof opt === 'string')
+    opt = { uri: opt }
+  else if (!opt)
+    opt = {}
+
+  var expectBinary = opt.binary
+  if (expectBinary)
+    opt = getBinaryOpts(opt)
+
+  xhr(opt, function(err, res, body) {
+    if (err)
+      return cb(err)
+    if (!/^2/.test(res.statusCode))
+      return cb(new Error('http status code: '+res.statusCode))
+    if (!body)
+      return cb(new Error('no body result'))
+
+    var binary = false 
+
+    //if the response type is an array buffer,
+    //we need to convert it into a regular Buffer object
+    if (isArrayBuffer(body)) {
+      var array = new Uint8Array(body)
+      body = new Buffer(array, 'binary')
+    }
+
+    //now check the string/Buffer response
+    //and see if it has a binary BMF header
+    if (isBinaryFormat(body)) {
+      binary = true
+      //if we have a string, turn it into a Buffer
+      if (typeof body === 'string') 
+        body = new Buffer(body, 'binary')
+    } 
+
+    //we are not parsing a binary format, just ASCII/XML/etc
+    if (!binary) {
+      //might still be a buffer if responseType is 'arraybuffer'
+      if (Buffer.isBuffer(body))
+        body = body.toString(opt.encoding)
+      body = body.trim()
+    }
+
+    var result
+    try {
+      var type = res.headers['content-type']
+      if (binary)
+        result = readBinary(body)
+      else if (/json/.test(type) || body.charAt(0) === '{')
+        result = JSON.parse(body)
+      else if (/xml/.test(type)  || body.charAt(0) === '<')
+        result = parseXML(body)
+      else
+        result = parseASCII(body)
+    } catch (e) {
+      cb(new Error('error parsing font '+e.message))
+      cb = noop
+    }
+    cb(null, result)
+  })
 }
+
+function isArrayBuffer(arr) {
+  var str = Object.prototype.toString
+  return str.call(arr) === '[object ArrayBuffer]'
+}
+
+function getBinaryOpts(opt) {
+  //IE10+ and other modern browsers support array buffers
+  if (xml2)
+    return xtend(opt, { responseType: 'arraybuffer' })
+  
+  if (typeof window.XMLHttpRequest === 'undefined')
+    throw new Error('your browser does not support XHR loading')
+
+  //IE9 and XML1 browsers could still use an override
+  var req = new window.XMLHttpRequest()
+  req.overrideMimeType('text/plain; charset=x-user-defined')
+  return xtend({
+    xhr: req
+  }, opt)
+}
+}).call(this,require("buffer").Buffer)
+},{"./lib/is-binary":11,"buffer":6,"parse-bmfont-ascii":13,"parse-bmfont-binary":14,"parse-bmfont-xml":15,"xhr":18,"xtend":24}],11:[function(require,module,exports){
+(function (Buffer){
+var equal = require('buffer-equal')
+var HEADER = new Buffer([66, 77, 70, 3])
+
+module.exports = function(buf) {
+  if (typeof buf === 'string')
+    return buf.substring(0, 3) === 'BMF'
+  return buf.length > 4 && equal(buf.slice(0, 4), HEADER)
+}
+}).call(this,require("buffer").Buffer)
+},{"buffer":6,"buffer-equal":12}],12:[function(require,module,exports){
+var Buffer = require('buffer').Buffer; // for use with browserify
+
+module.exports = function (a, b) {
+    if (!Buffer.isBuffer(a)) return undefined;
+    if (!Buffer.isBuffer(b)) return undefined;
+    if (typeof a.equals === 'function') return a.equals(b);
+    if (a.length !== b.length) return false;
+    
+    for (var i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    
+    return true;
+};
+
+},{"buffer":6}],13:[function(require,module,exports){
+module.exports = function parseBMFontAscii(data) {
+  if (!data)
+    throw new Error('no data provided')
+  data = data.toString().trim()
+
+  var output = {
+    pages: [],
+    chars: [],
+    kernings: []
+  }
+
+  var lines = data.split(/\r\n?|\n/g)
+
+  if (lines.length === 0)
+    throw new Error('no data in BMFont file')
+
+  for (var i = 0; i < lines.length; i++) {
+    var lineData = splitLine(lines[i], i)
+    if (!lineData) //skip empty lines
+      continue
+
+    if (lineData.key === 'page') {
+      if (typeof lineData.data.id !== 'number')
+        throw new Error('malformed file at line ' + i + ' -- needs page id=N')
+      if (typeof lineData.data.file !== 'string')
+        throw new Error('malformed file at line ' + i + ' -- needs page file="path"')
+      output.pages[lineData.data.id] = lineData.data.file
+    } else if (lineData.key === 'chars' || lineData.key === 'kernings') {
+      //... do nothing for these two ...
+    } else if (lineData.key === 'char') {
+      output.chars.push(lineData.data)
+    } else if (lineData.key === 'kerning') {
+      output.kernings.push(lineData.data)
+    } else {
+      output[lineData.key] = lineData.data
+    }
+  }
+
+  return output
+}
+
+function splitLine(line, idx) {
+  line = line.replace(/\t+/g, ' ').trim()
+  if (!line)
+    return null
+
+  var space = line.indexOf(' ')
+  if (space === -1) 
+    throw new Error("no named row at line " + idx)
+
+  var key = line.substring(0, space)
+
+  line = line.substring(space + 1)
+  //clear "letter" field as it is non-standard and
+  //requires additional complexity to parse " / = symbols
+  line = line.replace(/letter=[\'\"]\S+[\'\"]/gi, '')  
+  line = line.split("=")
+  line = line.map(function(str) {
+    return str.trim().match((/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g))
+  })
+
+  var data = []
+  for (var i = 0; i < line.length; i++) {
+    var dt = line[i]
+    if (i === 0) {
+      data.push({
+        key: dt[0],
+        data: ""
+      })
+    } else if (i === line.length - 1) {
+      data[data.length - 1].data = parseData(dt[0])
+    } else {
+      data[data.length - 1].data = parseData(dt[0])
+      data.push({
+        key: dt[1],
+        data: ""
+      })
+    }
+  }
+
+  var out = {
+    key: key,
+    data: {}
+  }
+
+  data.forEach(function(v) {
+    out.data[v.key] = v.data;
+  })
+
+  return out
+}
+
+function parseData(data) {
+  if (!data || data.length === 0)
+    return ""
+
+  if (data.indexOf('"') === 0 || data.indexOf("'") === 0)
+    return data.substring(1, data.length - 1)
+  if (data.indexOf(',') !== -1)
+    return parseIntList(data)
+  return parseInt(data, 10)
+}
+
+function parseIntList(data) {
+  return data.split(',').map(function(val) {
+    return parseInt(val, 10)
+  })
+}
+},{}],14:[function(require,module,exports){
+var HEADER = [66, 77, 70]
+
+module.exports = function readBMFontBinary(buf) {
+  if (buf.length < 6)
+    throw new Error('invalid buffer length for BMFont')
+
+  var header = HEADER.every(function(byte, i) {
+    return buf.readUInt8(i) === byte
+  })
+
+  if (!header)
+    throw new Error('BMFont missing BMF byte header')
+
+  var i = 3
+  var vers = buf.readUInt8(i++)
+  if (vers > 3)
+    throw new Error('Only supports BMFont Binary v3 (BMFont App v1.10)')
+  
+  var target = { kernings: [], chars: [] }
+  for (var b=0; b<5; b++)
+    i += readBlock(target, buf, i)
+  return target
+}
+
+function readBlock(target, buf, i) {
+  if (i > buf.length-1)
+    return 0
+
+  var blockID = buf.readUInt8(i++)
+  var blockSize = buf.readInt32LE(i)
+  i += 4
+
+  switch(blockID) {
+    case 1: 
+      target.info = readInfo(buf, i)
+      break
+    case 2:
+      target.common = readCommon(buf, i)
+      break
+    case 3:
+      target.pages = readPages(buf, i, blockSize)
+      break
+    case 4:
+      target.chars = readChars(buf, i, blockSize)
+      break
+    case 5:
+      target.kernings = readKernings(buf, i, blockSize)
+      break
+  }
+  return 5 + blockSize
+}
+
+function readInfo(buf, i) {
+  var info = {}
+  info.size = buf.readInt16LE(i)
+
+  var bitField = buf.readUInt8(i+2)
+  info.smooth = (bitField >> 7) & 1
+  info.unicode = (bitField >> 6) & 1
+  info.italic = (bitField >> 5) & 1
+  info.bold = (bitField >> 4) & 1
+  
+  //fixedHeight is only mentioned in binary spec 
+  if ((bitField >> 3) & 1)
+    info.fixedHeight = 1
+  
+  info.charset = buf.readUInt8(i+3) || ''
+  info.stretchH = buf.readUInt16LE(i+4)
+  info.aa = buf.readUInt8(i+6)
+  info.padding = [
+    buf.readInt8(i+7),
+    buf.readInt8(i+8),
+    buf.readInt8(i+9),
+    buf.readInt8(i+10)
+  ]
+  info.spacing = [
+    buf.readInt8(i+11),
+    buf.readInt8(i+12)
+  ]
+  info.outline = buf.readUInt8(i+13)
+  info.face = readStringNT(buf, i+14)
+  return info
+}
+
+function readCommon(buf, i) {
+  var common = {}
+  common.lineHeight = buf.readUInt16LE(i)
+  common.base = buf.readUInt16LE(i+2)
+  common.scaleW = buf.readUInt16LE(i+4)
+  common.scaleH = buf.readUInt16LE(i+6)
+  common.pages = buf.readUInt16LE(i+8)
+  var bitField = buf.readUInt8(i+10)
+  common.packed = 0
+  common.alphaChnl = buf.readUInt8(i+11)
+  common.redChnl = buf.readUInt8(i+12)
+  common.greenChnl = buf.readUInt8(i+13)
+  common.blueChnl = buf.readUInt8(i+14)
+  return common
+}
+
+function readPages(buf, i, size) {
+  var pages = []
+  var text = readNameNT(buf, i)
+  var len = text.length+1
+  var count = size / len
+  for (var c=0; c<count; c++) {
+    pages[c] = buf.slice(i, i+text.length).toString('utf8')
+    i += len
+  }
+  return pages
+}
+
+function readChars(buf, i, blockSize) {
+  var chars = []
+
+  var count = blockSize / 20
+  for (var c=0; c<count; c++) {
+    var char = {}
+    var off = c*20
+    char.id = buf.readUInt32LE(i + 0 + off)
+    char.x = buf.readUInt16LE(i + 4 + off)
+    char.y = buf.readUInt16LE(i + 6 + off)
+    char.width = buf.readUInt16LE(i + 8 + off)
+    char.height = buf.readUInt16LE(i + 10 + off)
+    char.xoffset = buf.readInt16LE(i + 12 + off)
+    char.yoffset = buf.readInt16LE(i + 14 + off)
+    char.xadvance = buf.readInt16LE(i + 16 + off)
+    char.page = buf.readUInt8(i + 18 + off)
+    char.chnl = buf.readUInt8(i + 19 + off)
+    chars[c] = char
+  }
+  return chars
+}
+
+function readKernings(buf, i, blockSize) {
+  var kernings = []
+  var count = blockSize / 10
+  for (var c=0; c<count; c++) {
+    var kern = {}
+    var off = c*10
+    kern.first = buf.readUInt32LE(i + 0 + off)
+    kern.second = buf.readUInt32LE(i + 4 + off)
+    kern.amount = buf.readInt16LE(i + 8 + off)
+    kernings[c] = kern
+  }
+  return kernings
+}
+
+function readNameNT(buf, offset) {
+  var pos=offset
+  for (; pos<buf.length; pos++) {
+    if (buf[pos] === 0x00) 
+      break
+  }
+  return buf.slice(offset, pos)
+}
+
+function readStringNT(buf, offset) {
+  return readNameNT(buf, offset).toString('utf8')
+}
+},{}],15:[function(require,module,exports){
+var parseAttributes = require('./parse-attribs')
+var parseFromString = require('xml-parse-from-string')
+
+//In some cases element.attribute.nodeName can return
+//all lowercase values.. so we need to map them to the correct 
+//case
+var NAME_MAP = {
+  scaleh: 'scaleH',
+  scalew: 'scaleW',
+  stretchh: 'stretchH',
+  lineheight: 'lineHeight',
+  alphachnl: 'alphaChnl',
+  redchnl: 'redChnl',
+  greenchnl: 'greenChnl',
+  bluechnl: 'blueChnl'
+}
+
+module.exports = function parse(data) {
+  data = data.toString()
+  
+  var xmlRoot = parseFromString(data)
+  var output = {
+    pages: [],
+    chars: [],
+    kernings: []
+  }
+
+  //get config settings
+  ;['info', 'common'].forEach(function(key) {
+    var element = xmlRoot.getElementsByTagName(key)[0]
+    if (element)
+      output[key] = parseAttributes(getAttribs(element))
+  })
+
+  //get page info
+  var pageRoot = xmlRoot.getElementsByTagName('pages')[0]
+  if (!pageRoot)
+    throw new Error('malformed file -- no <pages> element')
+  var pages = pageRoot.getElementsByTagName('page')
+  for (var i=0; i<pages.length; i++) {
+    var p = pages[i]
+    var id = parseInt(p.getAttribute('id'), 10)
+    var file = p.getAttribute('file')
+    if (isNaN(id))
+      throw new Error('malformed file -- page "id" attribute is NaN')
+    if (!file)
+      throw new Error('malformed file -- needs page "file" attribute')
+    output.pages[parseInt(id, 10)] = file
+  }
+
+  //get kernings / chars
+  ;['chars', 'kernings'].forEach(function(key) {
+    var element = xmlRoot.getElementsByTagName(key)[0]
+    if (!element)
+      return
+    var childTag = key.substring(0, key.length-1)
+    var children = element.getElementsByTagName(childTag)
+    for (var i=0; i<children.length; i++) {      
+      var child = children[i]
+      output[key].push(parseAttributes(getAttribs(child)))
+    }
+  })
+  return output
+}
+
+function getAttribs(element) {
+  var attribs = getAttribList(element)
+  return attribs.reduce(function(dict, attrib) {
+    var key = mapName(attrib.nodeName)
+    dict[key] = attrib.nodeValue
+    return dict
+  }, {})
+}
+
+function getAttribList(element) {
+  //IE8+ and modern browsers
+  var attribs = []
+  for (var i=0; i<element.attributes.length; i++)
+    attribs.push(element.attributes[i])
+  return attribs
+}
+
+function mapName(nodeName) {
+  return NAME_MAP[nodeName.toLowerCase()] || nodeName
+}
+},{"./parse-attribs":16,"xml-parse-from-string":17}],16:[function(require,module,exports){
+//Some versions of GlyphDesigner have a typo
+//that causes some bugs with parsing. 
+//Need to confirm with recent version of the software
+//to see whether this is still an issue or not.
+var GLYPH_DESIGNER_ERROR = 'chasrset'
+
+module.exports = function parseAttributes(obj) {
+  if (GLYPH_DESIGNER_ERROR in obj) {
+    obj['charset'] = obj[GLYPH_DESIGNER_ERROR]
+    delete obj[GLYPH_DESIGNER_ERROR]
+  }
+
+  for (var k in obj) {
+    if (k === 'face' || k === 'charset') 
+      continue
+    else if (k === 'padding' || k === 'spacing')
+      obj[k] = parseIntList(obj[k])
+    else
+      obj[k] = parseInt(obj[k], 10) 
+  }
+  return obj
+}
+
+function parseIntList(data) {
+  return data.split(',').map(function(val) {
+    return parseInt(val, 10)
+  })
+}
+},{}],17:[function(require,module,exports){
+module.exports = (function xmlparser() {
+  //common browsers
+  if (typeof window.DOMParser !== 'undefined') {
+    return function(str) {
+      var parser = new window.DOMParser()
+      return parser.parseFromString(str, 'application/xml')
+    }
+  } 
+
+  //IE8 fallback
+  if (typeof window.ActiveXObject !== 'undefined'
+      && new window.ActiveXObject('Microsoft.XMLDOM')) {
+    return function(str) {
+      var xmlDoc = new window.ActiveXObject("Microsoft.XMLDOM")
+      xmlDoc.async = "false"
+      xmlDoc.loadXML(str)
+      return xmlDoc
+    }
+  }
+
+  //last resort fallback
+  return function(str) {
+    var div = document.createElement('div')
+    div.innerHTML = str
+    return div
+  }
+})()
 },{}],18:[function(require,module,exports){
+"use strict";
+var window = require("global/window")
+var isFunction = require("is-function")
+var parseHeaders = require("parse-headers")
+var xtend = require("xtend")
+
+module.exports = createXHR
+createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
+createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
+
+forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
+    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
+        options = initParams(uri, options, callback)
+        options.method = method.toUpperCase()
+        return _createXHR(options)
+    }
+})
+
+function forEachArray(array, iterator) {
+    for (var i = 0; i < array.length; i++) {
+        iterator(array[i])
+    }
+}
+
+function isEmpty(obj){
+    for(var i in obj){
+        if(obj.hasOwnProperty(i)) return false
+    }
+    return true
+}
+
+function initParams(uri, options, callback) {
+    var params = uri
+
+    if (isFunction(options)) {
+        callback = options
+        if (typeof uri === "string") {
+            params = {uri:uri}
+        }
+    } else {
+        params = xtend(options, {uri: uri})
+    }
+
+    params.callback = callback
+    return params
+}
+
+function createXHR(uri, options, callback) {
+    options = initParams(uri, options, callback)
+    return _createXHR(options)
+}
+
+function _createXHR(options) {
+    if(typeof options.callback === "undefined"){
+        throw new Error("callback argument missing")
+    }
+
+    var called = false
+    var callback = function cbOnce(err, response, body){
+        if(!called){
+            called = true
+            options.callback(err, response, body)
+        }
+    }
+
+    function readystatechange() {
+        if (xhr.readyState === 4) {
+            loadFunc()
+        }
+    }
+
+    function getBody() {
+        // Chrome with requestType=blob throws errors arround when even testing access to responseText
+        var body = undefined
+
+        if (xhr.response) {
+            body = xhr.response
+        } else {
+            body = xhr.responseText || getXml(xhr)
+        }
+
+        if (isJson) {
+            try {
+                body = JSON.parse(body)
+            } catch (e) {}
+        }
+
+        return body
+    }
+
+    var failureResponse = {
+                body: undefined,
+                headers: {},
+                statusCode: 0,
+                method: method,
+                url: uri,
+                rawRequest: xhr
+            }
+
+    function errorFunc(evt) {
+        clearTimeout(timeoutTimer)
+        if(!(evt instanceof Error)){
+            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") )
+        }
+        evt.statusCode = 0
+        return callback(evt, failureResponse)
+    }
+
+    // will load the data & process the response in a special response object
+    function loadFunc() {
+        if (aborted) return
+        var status
+        clearTimeout(timeoutTimer)
+        if(options.useXDR && xhr.status===undefined) {
+            //IE8 CORS GET successful response doesn't have a status field, but body is fine
+            status = 200
+        } else {
+            status = (xhr.status === 1223 ? 204 : xhr.status)
+        }
+        var response = failureResponse
+        var err = null
+
+        if (status !== 0){
+            response = {
+                body: getBody(),
+                statusCode: status,
+                method: method,
+                headers: {},
+                url: uri,
+                rawRequest: xhr
+            }
+            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
+                response.headers = parseHeaders(xhr.getAllResponseHeaders())
+            }
+        } else {
+            err = new Error("Internal XMLHttpRequest Error")
+        }
+        return callback(err, response, response.body)
+    }
+
+    var xhr = options.xhr || null
+
+    if (!xhr) {
+        if (options.cors || options.useXDR) {
+            xhr = new createXHR.XDomainRequest()
+        }else{
+            xhr = new createXHR.XMLHttpRequest()
+        }
+    }
+
+    var key
+    var aborted
+    var uri = xhr.url = options.uri || options.url
+    var method = xhr.method = options.method || "GET"
+    var body = options.body || options.data || null
+    var headers = xhr.headers = options.headers || {}
+    var sync = !!options.sync
+    var isJson = false
+    var timeoutTimer
+
+    if ("json" in options && options.json !== false) {
+        isJson = true
+        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
+        if (method !== "GET" && method !== "HEAD") {
+            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json") //Don't override existing accept header declared by user
+            body = JSON.stringify(options.json === true ? body : options.json)
+        }
+    }
+
+    xhr.onreadystatechange = readystatechange
+    xhr.onload = loadFunc
+    xhr.onerror = errorFunc
+    // IE9 must have onprogress be set to a unique function.
+    xhr.onprogress = function () {
+        // IE must die
+    }
+    xhr.onabort = function(){
+        aborted = true;
+    }
+    xhr.ontimeout = errorFunc
+    xhr.open(method, uri, !sync, options.username, options.password)
+    //has to be after open
+    if(!sync) {
+        xhr.withCredentials = !!options.withCredentials
+    }
+    // Cannot set timeout with sync request
+    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
+    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
+    if (!sync && options.timeout > 0 ) {
+        timeoutTimer = setTimeout(function(){
+            if (aborted) return
+            aborted = true//IE9 may still call readystatechange
+            xhr.abort("timeout")
+            var e = new Error("XMLHttpRequest timeout")
+            e.code = "ETIMEDOUT"
+            errorFunc(e)
+        }, options.timeout )
+    }
+
+    if (xhr.setRequestHeader) {
+        for(key in headers){
+            if(headers.hasOwnProperty(key)){
+                xhr.setRequestHeader(key, headers[key])
+            }
+        }
+    } else if (options.headers && !isEmpty(options.headers)) {
+        throw new Error("Headers cannot be set on an XDomainRequest object")
+    }
+
+    if ("responseType" in options) {
+        xhr.responseType = options.responseType
+    }
+
+    if ("beforeSend" in options &&
+        typeof options.beforeSend === "function"
+    ) {
+        options.beforeSend(xhr)
+    }
+
+    xhr.send(body)
+
+    return xhr
+
+
+}
+
+function getXml(xhr) {
+    if (xhr.responseType === "document") {
+        return xhr.responseXML
+    }
+    var firefoxBugTakenEffect = xhr.status === 204 && xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
+    if (xhr.responseType === "" && !firefoxBugTakenEffect) {
+        return xhr.responseXML
+    }
+
+    return null
+}
+
+function noop() {}
+
+},{"global/window":19,"is-function":20,"parse-headers":23,"xtend":24}],19:[function(require,module,exports){
+(function (global){
+if (typeof window !== "undefined") {
+    module.exports = window;
+} else if (typeof global !== "undefined") {
+    module.exports = global;
+} else if (typeof self !== "undefined"){
+    module.exports = self;
+} else {
+    module.exports = {};
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],20:[function(require,module,exports){
+module.exports = isFunction
+
+var toString = Object.prototype.toString
+
+function isFunction (fn) {
+  var string = toString.call(fn)
+  return string === '[object Function]' ||
+    (typeof fn === 'function' && string !== '[object RegExp]') ||
+    (typeof window !== 'undefined' &&
+     // IE8 and below
+     (fn === window.setTimeout ||
+      fn === window.alert ||
+      fn === window.confirm ||
+      fn === window.prompt))
+};
+
+},{}],21:[function(require,module,exports){
+var isFunction = require('is-function')
+
+module.exports = forEach
+
+var toString = Object.prototype.toString
+var hasOwnProperty = Object.prototype.hasOwnProperty
+
+function forEach(list, iterator, context) {
+    if (!isFunction(iterator)) {
+        throw new TypeError('iterator must be a function')
+    }
+
+    if (arguments.length < 3) {
+        context = this
+    }
+    
+    if (toString.call(list) === '[object Array]')
+        forEachArray(list, iterator, context)
+    else if (typeof list === 'string')
+        forEachString(list, iterator, context)
+    else
+        forEachObject(list, iterator, context)
+}
+
+function forEachArray(array, iterator, context) {
+    for (var i = 0, len = array.length; i < len; i++) {
+        if (hasOwnProperty.call(array, i)) {
+            iterator.call(context, array[i], i, array)
+        }
+    }
+}
+
+function forEachString(string, iterator, context) {
+    for (var i = 0, len = string.length; i < len; i++) {
+        // no such thing as a sparse string.
+        iterator.call(context, string.charAt(i), i, string)
+    }
+}
+
+function forEachObject(object, iterator, context) {
+    for (var k in object) {
+        if (hasOwnProperty.call(object, k)) {
+            iterator.call(context, object[k], k, object)
+        }
+    }
+}
+
+},{"is-function":20}],22:[function(require,module,exports){
+
+exports = module.exports = trim;
+
+function trim(str){
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  return str.replace(/\s*$/, '');
+};
+
+},{}],23:[function(require,module,exports){
+var trim = require('trim')
+  , forEach = require('for-each')
+  , isArray = function(arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    }
+
+module.exports = function (headers) {
+  if (!headers)
+    return {}
+
+  var result = {}
+
+  forEach(
+      trim(headers).split('\n')
+    , function (row) {
+        var index = row.indexOf(':')
+          , key = trim(row.slice(0, index)).toLowerCase()
+          , value = trim(row.slice(index + 1))
+
+        if (typeof(result[key]) === 'undefined') {
+          result[key] = value
+        } else if (isArray(result[key])) {
+          result[key].push(value)
+        } else {
+          result[key] = [ result[key], value ]
+        }
+      }
+  )
+
+  return result
+}
+},{"for-each":21,"trim":22}],24:[function(require,module,exports){
+module.exports = extend
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
+    }
+
+    return target
+}
+
+},{}],25:[function(require,module,exports){
+'use strict';
+/* eslint-disable no-unused-vars */
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+function toObject(val) {
+	if (val === null || val === undefined) {
+		throw new TypeError('Object.assign cannot be called with null or undefined');
+	}
+
+	return Object(val);
+}
+
+function shouldUseNative() {
+	try {
+		if (!Object.assign) {
+			return false;
+		}
+
+		// Detect buggy property enumeration order in older V8 versions.
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=4118
+		var test1 = new String('abc');  // eslint-disable-line
+		test1[5] = 'de';
+		if (Object.getOwnPropertyNames(test1)[0] === '5') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test2 = {};
+		for (var i = 0; i < 10; i++) {
+			test2['_' + String.fromCharCode(i)] = i;
+		}
+		var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+			return test2[n];
+		});
+		if (order2.join('') !== '0123456789') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test3 = {};
+		'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+			test3[letter] = letter;
+		});
+		if (Object.keys(Object.assign({}, test3)).join('') !==
+				'abcdefghijklmnopqrst') {
+			return false;
+		}
+
+		return true;
+	} catch (e) {
+		// We don't expect any of the above to throw, but better to be safe.
+		return false;
+	}
+}
+
+module.exports = shouldUseNative() ? Object.assign : function (target, source) {
+	var from;
+	var to = toObject(target);
+	var symbols;
+
+	for (var s = 1; s < arguments.length; s++) {
+		from = Object(arguments[s]);
+
+		for (var key in from) {
+			if (hasOwnProperty.call(from, key)) {
+				to[key] = from[key];
+			}
+		}
+
+		if (Object.getOwnPropertySymbols) {
+			symbols = Object.getOwnPropertySymbols(from);
+			for (var i = 0; i < symbols.length; i++) {
+				if (propIsEnumerable.call(from, symbols[i])) {
+					to[symbols[i]] = from[symbols[i]];
+				}
+			}
+		}
+	}
+
+	return to;
+};
+
+},{}],26:[function(require,module,exports){
+var createLayout = require('layout-bmfont-text')
+var inherits = require('inherits')
+var createIndices = require('quad-indices')
+var buffer = require('three-buffer-vertex-data')
+var assign = require('object-assign')
+
+var vertices = require('./lib/vertices')
+var utils = require('./lib/utils')
+
+var Base = THREE.BufferGeometry
+
+module.exports = function createTextGeometry (opt) {
+  return new TextGeometry(opt)
+}
+
+function TextGeometry (opt) {
+  Base.call(this)
+
+  if (typeof opt === 'string') {
+    opt = { text: opt }
+  }
+
+  // use these as default values for any subsequent
+  // calls to update()
+  this._opt = assign({}, opt)
+
+  // also do an initial setup...
+  if (opt) this.update(opt)
+}
+
+inherits(TextGeometry, Base)
+
+TextGeometry.prototype.update = function (opt) {
+  if (typeof opt === 'string') {
+    opt = { text: opt }
+  }
+
+  // use constructor defaults
+  opt = assign({}, this._opt, opt)
+
+  if (!opt.font) {
+    throw new TypeError('must specify a { font } in options')
+  }
+
+  this.layout = createLayout(opt)
+
+  // get vec2 texcoords
+  var flipY = opt.flipY !== false
+
+  // the desired BMFont data
+  var font = opt.font
+
+  // determine texture size from font file
+  var texWidth = font.common.scaleW
+  var texHeight = font.common.scaleH
+
+  // get visible glyphs
+  var glyphs = this.layout.glyphs.filter(function (glyph) {
+    var bitmap = glyph.data
+    return bitmap.width * bitmap.height > 0
+  })
+
+  // provide visible glyphs for convenience
+  this.visibleGlyphs = glyphs
+
+  // get common vertex data
+  var positions = vertices.positions(glyphs)
+  var uvs = vertices.uvs(glyphs, texWidth, texHeight, flipY)
+  var indices = createIndices({
+    clockwise: true,
+    type: 'uint16',
+    count: glyphs.length
+  })
+
+  // update vertex data
+  buffer.index(this, indices, 1, 'uint16')
+  buffer.attr(this, 'position', positions, 2)
+  buffer.attr(this, 'uv', uvs, 2)
+
+  // update multipage data
+  if (!opt.multipage && 'page' in this.attributes) {
+    // disable multipage rendering
+    this.removeAttribute('page')
+  } else if (opt.multipage) {
+    var pages = vertices.pages(glyphs)
+    // enable multipage rendering
+    buffer.attr(this, 'page', pages, 1)
+  }
+}
+
+TextGeometry.prototype.computeBoundingSphere = function () {
+  if (this.boundingSphere === null) {
+    this.boundingSphere = new THREE.Sphere()
+  }
+
+  var positions = this.attributes.position.array
+  var itemSize = this.attributes.position.itemSize
+  if (!positions || !itemSize || positions.length < 2) {
+    this.boundingSphere.radius = 0
+    this.boundingSphere.center.set(0, 0, 0)
+    return
+  }
+  utils.computeSphere(positions, this.boundingSphere)
+  if (isNaN(this.boundingSphere.radius)) {
+    console.error('THREE.BufferGeometry.computeBoundingSphere(): ' +
+      'Computed radius is NaN. The ' +
+      '"position" attribute is likely to have NaN values.')
+  }
+}
+
+TextGeometry.prototype.computeBoundingBox = function () {
+  if (this.boundingBox === null) {
+    this.boundingBox = new THREE.Box3()
+  }
+
+  var bbox = this.boundingBox
+  var positions = this.attributes.position.array
+  var itemSize = this.attributes.position.itemSize
+  if (!positions || !itemSize || positions.length < 2) {
+    bbox.makeEmpty()
+    return
+  }
+  utils.computeBox(positions, bbox)
+}
+
+},{"./lib/utils":27,"./lib/vertices":28,"inherits":29,"layout-bmfont-text":30,"object-assign":25,"quad-indices":35,"three-buffer-vertex-data":39}],27:[function(require,module,exports){
+var itemSize = 2
+var box = { min: [0, 0], max: [0, 0] }
+
+function bounds (positions) {
+  var count = positions.length / itemSize
+  box.min[0] = positions[0]
+  box.min[1] = positions[1]
+  box.max[0] = positions[0]
+  box.max[1] = positions[1]
+
+  for (var i = 0; i < count; i++) {
+    var x = positions[i * itemSize + 0]
+    var y = positions[i * itemSize + 1]
+    box.min[0] = Math.min(x, box.min[0])
+    box.min[1] = Math.min(y, box.min[1])
+    box.max[0] = Math.max(x, box.max[0])
+    box.max[1] = Math.max(y, box.max[1])
+  }
+}
+
+module.exports.computeBox = function (positions, output) {
+  bounds(positions)
+  output.min.set(box.min[0], box.min[1], 0)
+  output.max.set(box.max[0], box.max[1], 0)
+}
+
+module.exports.computeSphere = function (positions, output) {
+  bounds(positions)
+  var minX = box.min[0]
+  var minY = box.min[1]
+  var maxX = box.max[0]
+  var maxY = box.max[1]
+  var width = maxX - minX
+  var height = maxY - minY
+  var length = Math.sqrt(width * width + height * height)
+  output.center.set(minX + width / 2, minY + height / 2, 0)
+  output.radius = length / 2
+}
+
+},{}],28:[function(require,module,exports){
+module.exports.pages = function pages (glyphs) {
+  var pages = new Float32Array(glyphs.length * 4 * 1)
+  var i = 0
+  glyphs.forEach(function (glyph) {
+    var id = glyph.data.page || 0
+    pages[i++] = id
+    pages[i++] = id
+    pages[i++] = id
+    pages[i++] = id
+  })
+  return pages
+}
+
+module.exports.uvs = function uvs (glyphs, texWidth, texHeight, flipY) {
+  var uvs = new Float32Array(glyphs.length * 4 * 2)
+  var i = 0
+  glyphs.forEach(function (glyph) {
+    var bitmap = glyph.data
+    var bw = (bitmap.x + bitmap.width)
+    var bh = (bitmap.y + bitmap.height)
+
+    // top left position
+    var u0 = bitmap.x / texWidth
+    var v1 = bitmap.y / texHeight
+    var u1 = bw / texWidth
+    var v0 = bh / texHeight
+
+    if (flipY) {
+      v1 = (texHeight - bitmap.y) / texHeight
+      v0 = (texHeight - bh) / texHeight
+    }
+
+    // BL
+    uvs[i++] = u0
+    uvs[i++] = v1
+    // TL
+    uvs[i++] = u0
+    uvs[i++] = v0
+    // TR
+    uvs[i++] = u1
+    uvs[i++] = v0
+    // BR
+    uvs[i++] = u1
+    uvs[i++] = v1
+  })
+  return uvs
+}
+
+module.exports.positions = function positions (glyphs) {
+  var positions = new Float32Array(glyphs.length * 4 * 2)
+  var i = 0
+  glyphs.forEach(function (glyph) {
+    var bitmap = glyph.data
+
+    // bottom left position
+    var x = glyph.position[0] + bitmap.xoffset
+    var y = glyph.position[1] + bitmap.yoffset
+
+    // quad size
+    var w = bitmap.width
+    var h = bitmap.height
+
+    // BL
+    positions[i++] = x
+    positions[i++] = y
+    // TL
+    positions[i++] = x
+    positions[i++] = y + h
+    // TR
+    positions[i++] = x + w
+    positions[i++] = y + h
+    // BR
+    positions[i++] = x + w
+    positions[i++] = y
+  })
+  return positions
+}
+
+},{}],29:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -70188,47 +71214,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],19:[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}],20:[function(require,module,exports){
-module.exports = isFunction
-
-var toString = Object.prototype.toString
-
-function isFunction (fn) {
-  var string = toString.call(fn)
-  return string === '[object Function]' ||
-    (typeof fn === 'function' && string !== '[object RegExp]') ||
-    (typeof window !== 'undefined' &&
-     // IE8 and below
-     (fn === window.setTimeout ||
-      fn === window.alert ||
-      fn === window.confirm ||
-      fn === window.prompt))
-};
-
-},{}],21:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var wordWrap = require('word-wrapper')
 var xtend = require('xtend')
 var findChar = require('indexof-property')('id')
@@ -70519,992 +71505,26 @@ function getAlignType(align) {
     return ALIGN_RIGHT
   return ALIGN_LEFT
 }
-},{"as-number":7,"indexof-property":17,"word-wrapper":36,"xtend":39}],22:[function(require,module,exports){
-(function (Buffer){
-var xhr = require('xhr')
-var noop = function(){}
-var parseASCII = require('parse-bmfont-ascii')
-var parseXML = require('parse-bmfont-xml')
-var readBinary = require('parse-bmfont-binary')
-var isBinaryFormat = require('./lib/is-binary')
-var xtend = require('xtend')
-
-var xml2 = (function hasXML2() {
-  return window.XMLHttpRequest && "withCredentials" in new XMLHttpRequest
-})()
-
-module.exports = function(opt, cb) {
-  cb = typeof cb === 'function' ? cb : noop
-
-  if (typeof opt === 'string')
-    opt = { uri: opt }
-  else if (!opt)
-    opt = {}
-
-  var expectBinary = opt.binary
-  if (expectBinary)
-    opt = getBinaryOpts(opt)
-
-  xhr(opt, function(err, res, body) {
-    if (err)
-      return cb(err)
-    if (!/^2/.test(res.statusCode))
-      return cb(new Error('http status code: '+res.statusCode))
-    if (!body)
-      return cb(new Error('no body result'))
-
-    var binary = false 
-
-    //if the response type is an array buffer,
-    //we need to convert it into a regular Buffer object
-    if (isArrayBuffer(body)) {
-      var array = new Uint8Array(body)
-      body = new Buffer(array, 'binary')
-    }
-
-    //now check the string/Buffer response
-    //and see if it has a binary BMF header
-    if (isBinaryFormat(body)) {
-      binary = true
-      //if we have a string, turn it into a Buffer
-      if (typeof body === 'string') 
-        body = new Buffer(body, 'binary')
-    } 
-
-    //we are not parsing a binary format, just ASCII/XML/etc
-    if (!binary) {
-      //might still be a buffer if responseType is 'arraybuffer'
-      if (Buffer.isBuffer(body))
-        body = body.toString(opt.encoding)
-      body = body.trim()
-    }
-
-    var result
-    try {
-      var type = res.headers['content-type']
-      if (binary)
-        result = readBinary(body)
-      else if (/json/.test(type) || body.charAt(0) === '{')
-        result = JSON.parse(body)
-      else if (/xml/.test(type)  || body.charAt(0) === '<')
-        result = parseXML(body)
-      else
-        result = parseASCII(body)
-    } catch (e) {
-      cb(new Error('error parsing font '+e.message))
-      cb = noop
-    }
-    cb(null, result)
-  })
+},{"as-number":31,"indexof-property":32,"word-wrapper":33,"xtend":34}],31:[function(require,module,exports){
+module.exports = function numtype(num, def) {
+	return typeof num === 'number'
+		? num 
+		: (typeof def === 'number' ? def : 0)
 }
+},{}],32:[function(require,module,exports){
+module.exports = function compile(property) {
+	if (!property || typeof property !== 'string')
+		throw new Error('must specify property for indexof search')
 
-function isArrayBuffer(arr) {
-  var str = Object.prototype.toString
-  return str.call(arr) === '[object ArrayBuffer]'
+	return new Function('array', 'value', 'start', [
+		'start = start || 0',
+		'for (var i=start; i<array.length; i++)',
+		'  if (array[i]["' + property +'"] === value)',
+		'      return i',
+		'return -1'
+	].join('\n'))
 }
-
-function getBinaryOpts(opt) {
-  //IE10+ and other modern browsers support array buffers
-  if (xml2)
-    return xtend(opt, { responseType: 'arraybuffer' })
-  
-  if (typeof window.XMLHttpRequest === 'undefined')
-    throw new Error('your browser does not support XHR loading')
-
-  //IE9 and XML1 browsers could still use an override
-  var req = new window.XMLHttpRequest()
-  req.overrideMimeType('text/plain; charset=x-user-defined')
-  return xtend({
-    xhr: req
-  }, opt)
-}
-}).call(this,require("buffer").Buffer)
-},{"./lib/is-binary":23,"buffer":10,"parse-bmfont-ascii":25,"parse-bmfont-binary":26,"parse-bmfont-xml":27,"xhr":37,"xtend":39}],23:[function(require,module,exports){
-(function (Buffer){
-var equal = require('buffer-equal')
-var HEADER = new Buffer([66, 77, 70, 3])
-
-module.exports = function(buf) {
-  if (typeof buf === 'string')
-    return buf.substring(0, 3) === 'BMF'
-  return buf.length > 4 && equal(buf.slice(0, 4), HEADER)
-}
-}).call(this,require("buffer").Buffer)
-},{"buffer":10,"buffer-equal":9}],24:[function(require,module,exports){
-'use strict';
-/* eslint-disable no-unused-vars */
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-function toObject(val) {
-	if (val === null || val === undefined) {
-		throw new TypeError('Object.assign cannot be called with null or undefined');
-	}
-
-	return Object(val);
-}
-
-function shouldUseNative() {
-	try {
-		if (!Object.assign) {
-			return false;
-		}
-
-		// Detect buggy property enumeration order in older V8 versions.
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=4118
-		var test1 = new String('abc');  // eslint-disable-line
-		test1[5] = 'de';
-		if (Object.getOwnPropertyNames(test1)[0] === '5') {
-			return false;
-		}
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
-		var test2 = {};
-		for (var i = 0; i < 10; i++) {
-			test2['_' + String.fromCharCode(i)] = i;
-		}
-		var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
-			return test2[n];
-		});
-		if (order2.join('') !== '0123456789') {
-			return false;
-		}
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
-		var test3 = {};
-		'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
-			test3[letter] = letter;
-		});
-		if (Object.keys(Object.assign({}, test3)).join('') !==
-				'abcdefghijklmnopqrst') {
-			return false;
-		}
-
-		return true;
-	} catch (e) {
-		// We don't expect any of the above to throw, but better to be safe.
-		return false;
-	}
-}
-
-module.exports = shouldUseNative() ? Object.assign : function (target, source) {
-	var from;
-	var to = toObject(target);
-	var symbols;
-
-	for (var s = 1; s < arguments.length; s++) {
-		from = Object(arguments[s]);
-
-		for (var key in from) {
-			if (hasOwnProperty.call(from, key)) {
-				to[key] = from[key];
-			}
-		}
-
-		if (Object.getOwnPropertySymbols) {
-			symbols = Object.getOwnPropertySymbols(from);
-			for (var i = 0; i < symbols.length; i++) {
-				if (propIsEnumerable.call(from, symbols[i])) {
-					to[symbols[i]] = from[symbols[i]];
-				}
-			}
-		}
-	}
-
-	return to;
-};
-
-},{}],25:[function(require,module,exports){
-module.exports = function parseBMFontAscii(data) {
-  if (!data)
-    throw new Error('no data provided')
-  data = data.toString().trim()
-
-  var output = {
-    pages: [],
-    chars: [],
-    kernings: []
-  }
-
-  var lines = data.split(/\r\n?|\n/g)
-
-  if (lines.length === 0)
-    throw new Error('no data in BMFont file')
-
-  for (var i = 0; i < lines.length; i++) {
-    var lineData = splitLine(lines[i], i)
-    if (!lineData) //skip empty lines
-      continue
-
-    if (lineData.key === 'page') {
-      if (typeof lineData.data.id !== 'number')
-        throw new Error('malformed file at line ' + i + ' -- needs page id=N')
-      if (typeof lineData.data.file !== 'string')
-        throw new Error('malformed file at line ' + i + ' -- needs page file="path"')
-      output.pages[lineData.data.id] = lineData.data.file
-    } else if (lineData.key === 'chars' || lineData.key === 'kernings') {
-      //... do nothing for these two ...
-    } else if (lineData.key === 'char') {
-      output.chars.push(lineData.data)
-    } else if (lineData.key === 'kerning') {
-      output.kernings.push(lineData.data)
-    } else {
-      output[lineData.key] = lineData.data
-    }
-  }
-
-  return output
-}
-
-function splitLine(line, idx) {
-  line = line.replace(/\t+/g, ' ').trim()
-  if (!line)
-    return null
-
-  var space = line.indexOf(' ')
-  if (space === -1) 
-    throw new Error("no named row at line " + idx)
-
-  var key = line.substring(0, space)
-
-  line = line.substring(space + 1)
-  //clear "letter" field as it is non-standard and
-  //requires additional complexity to parse " / = symbols
-  line = line.replace(/letter=[\'\"]\S+[\'\"]/gi, '')  
-  line = line.split("=")
-  line = line.map(function(str) {
-    return str.trim().match((/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g))
-  })
-
-  var data = []
-  for (var i = 0; i < line.length; i++) {
-    var dt = line[i]
-    if (i === 0) {
-      data.push({
-        key: dt[0],
-        data: ""
-      })
-    } else if (i === line.length - 1) {
-      data[data.length - 1].data = parseData(dt[0])
-    } else {
-      data[data.length - 1].data = parseData(dt[0])
-      data.push({
-        key: dt[1],
-        data: ""
-      })
-    }
-  }
-
-  var out = {
-    key: key,
-    data: {}
-  }
-
-  data.forEach(function(v) {
-    out.data[v.key] = v.data;
-  })
-
-  return out
-}
-
-function parseData(data) {
-  if (!data || data.length === 0)
-    return ""
-
-  if (data.indexOf('"') === 0 || data.indexOf("'") === 0)
-    return data.substring(1, data.length - 1)
-  if (data.indexOf(',') !== -1)
-    return parseIntList(data)
-  return parseInt(data, 10)
-}
-
-function parseIntList(data) {
-  return data.split(',').map(function(val) {
-    return parseInt(val, 10)
-  })
-}
-},{}],26:[function(require,module,exports){
-var HEADER = [66, 77, 70]
-
-module.exports = function readBMFontBinary(buf) {
-  if (buf.length < 6)
-    throw new Error('invalid buffer length for BMFont')
-
-  var header = HEADER.every(function(byte, i) {
-    return buf.readUInt8(i) === byte
-  })
-
-  if (!header)
-    throw new Error('BMFont missing BMF byte header')
-
-  var i = 3
-  var vers = buf.readUInt8(i++)
-  if (vers > 3)
-    throw new Error('Only supports BMFont Binary v3 (BMFont App v1.10)')
-  
-  var target = { kernings: [], chars: [] }
-  for (var b=0; b<5; b++)
-    i += readBlock(target, buf, i)
-  return target
-}
-
-function readBlock(target, buf, i) {
-  if (i > buf.length-1)
-    return 0
-
-  var blockID = buf.readUInt8(i++)
-  var blockSize = buf.readInt32LE(i)
-  i += 4
-
-  switch(blockID) {
-    case 1: 
-      target.info = readInfo(buf, i)
-      break
-    case 2:
-      target.common = readCommon(buf, i)
-      break
-    case 3:
-      target.pages = readPages(buf, i, blockSize)
-      break
-    case 4:
-      target.chars = readChars(buf, i, blockSize)
-      break
-    case 5:
-      target.kernings = readKernings(buf, i, blockSize)
-      break
-  }
-  return 5 + blockSize
-}
-
-function readInfo(buf, i) {
-  var info = {}
-  info.size = buf.readInt16LE(i)
-
-  var bitField = buf.readUInt8(i+2)
-  info.smooth = (bitField >> 7) & 1
-  info.unicode = (bitField >> 6) & 1
-  info.italic = (bitField >> 5) & 1
-  info.bold = (bitField >> 4) & 1
-  
-  //fixedHeight is only mentioned in binary spec 
-  if ((bitField >> 3) & 1)
-    info.fixedHeight = 1
-  
-  info.charset = buf.readUInt8(i+3) || ''
-  info.stretchH = buf.readUInt16LE(i+4)
-  info.aa = buf.readUInt8(i+6)
-  info.padding = [
-    buf.readInt8(i+7),
-    buf.readInt8(i+8),
-    buf.readInt8(i+9),
-    buf.readInt8(i+10)
-  ]
-  info.spacing = [
-    buf.readInt8(i+11),
-    buf.readInt8(i+12)
-  ]
-  info.outline = buf.readUInt8(i+13)
-  info.face = readStringNT(buf, i+14)
-  return info
-}
-
-function readCommon(buf, i) {
-  var common = {}
-  common.lineHeight = buf.readUInt16LE(i)
-  common.base = buf.readUInt16LE(i+2)
-  common.scaleW = buf.readUInt16LE(i+4)
-  common.scaleH = buf.readUInt16LE(i+6)
-  common.pages = buf.readUInt16LE(i+8)
-  var bitField = buf.readUInt8(i+10)
-  common.packed = 0
-  common.alphaChnl = buf.readUInt8(i+11)
-  common.redChnl = buf.readUInt8(i+12)
-  common.greenChnl = buf.readUInt8(i+13)
-  common.blueChnl = buf.readUInt8(i+14)
-  return common
-}
-
-function readPages(buf, i, size) {
-  var pages = []
-  var text = readNameNT(buf, i)
-  var len = text.length+1
-  var count = size / len
-  for (var c=0; c<count; c++) {
-    pages[c] = buf.slice(i, i+text.length).toString('utf8')
-    i += len
-  }
-  return pages
-}
-
-function readChars(buf, i, blockSize) {
-  var chars = []
-
-  var count = blockSize / 20
-  for (var c=0; c<count; c++) {
-    var char = {}
-    var off = c*20
-    char.id = buf.readUInt32LE(i + 0 + off)
-    char.x = buf.readUInt16LE(i + 4 + off)
-    char.y = buf.readUInt16LE(i + 6 + off)
-    char.width = buf.readUInt16LE(i + 8 + off)
-    char.height = buf.readUInt16LE(i + 10 + off)
-    char.xoffset = buf.readInt16LE(i + 12 + off)
-    char.yoffset = buf.readInt16LE(i + 14 + off)
-    char.xadvance = buf.readInt16LE(i + 16 + off)
-    char.page = buf.readUInt8(i + 18 + off)
-    char.chnl = buf.readUInt8(i + 19 + off)
-    chars[c] = char
-  }
-  return chars
-}
-
-function readKernings(buf, i, blockSize) {
-  var kernings = []
-  var count = blockSize / 10
-  for (var c=0; c<count; c++) {
-    var kern = {}
-    var off = c*10
-    kern.first = buf.readUInt32LE(i + 0 + off)
-    kern.second = buf.readUInt32LE(i + 4 + off)
-    kern.amount = buf.readInt16LE(i + 8 + off)
-    kernings[c] = kern
-  }
-  return kernings
-}
-
-function readNameNT(buf, offset) {
-  var pos=offset
-  for (; pos<buf.length; pos++) {
-    if (buf[pos] === 0x00) 
-      break
-  }
-  return buf.slice(offset, pos)
-}
-
-function readStringNT(buf, offset) {
-  return readNameNT(buf, offset).toString('utf8')
-}
-},{}],27:[function(require,module,exports){
-var parseAttributes = require('./parse-attribs')
-var parseFromString = require('xml-parse-from-string')
-
-//In some cases element.attribute.nodeName can return
-//all lowercase values.. so we need to map them to the correct 
-//case
-var NAME_MAP = {
-  scaleh: 'scaleH',
-  scalew: 'scaleW',
-  stretchh: 'stretchH',
-  lineheight: 'lineHeight',
-  alphachnl: 'alphaChnl',
-  redchnl: 'redChnl',
-  greenchnl: 'greenChnl',
-  bluechnl: 'blueChnl'
-}
-
-module.exports = function parse(data) {
-  data = data.toString()
-  
-  var xmlRoot = parseFromString(data)
-  var output = {
-    pages: [],
-    chars: [],
-    kernings: []
-  }
-
-  //get config settings
-  ;['info', 'common'].forEach(function(key) {
-    var element = xmlRoot.getElementsByTagName(key)[0]
-    if (element)
-      output[key] = parseAttributes(getAttribs(element))
-  })
-
-  //get page info
-  var pageRoot = xmlRoot.getElementsByTagName('pages')[0]
-  if (!pageRoot)
-    throw new Error('malformed file -- no <pages> element')
-  var pages = pageRoot.getElementsByTagName('page')
-  for (var i=0; i<pages.length; i++) {
-    var p = pages[i]
-    var id = parseInt(p.getAttribute('id'), 10)
-    var file = p.getAttribute('file')
-    if (isNaN(id))
-      throw new Error('malformed file -- page "id" attribute is NaN')
-    if (!file)
-      throw new Error('malformed file -- needs page "file" attribute')
-    output.pages[parseInt(id, 10)] = file
-  }
-
-  //get kernings / chars
-  ;['chars', 'kernings'].forEach(function(key) {
-    var element = xmlRoot.getElementsByTagName(key)[0]
-    if (!element)
-      return
-    var childTag = key.substring(0, key.length-1)
-    var children = element.getElementsByTagName(childTag)
-    for (var i=0; i<children.length; i++) {      
-      var child = children[i]
-      output[key].push(parseAttributes(getAttribs(child)))
-    }
-  })
-  return output
-}
-
-function getAttribs(element) {
-  var attribs = getAttribList(element)
-  return attribs.reduce(function(dict, attrib) {
-    var key = mapName(attrib.nodeName)
-    dict[key] = attrib.nodeValue
-    return dict
-  }, {})
-}
-
-function getAttribList(element) {
-  //IE8+ and modern browsers
-  var attribs = []
-  for (var i=0; i<element.attributes.length; i++)
-    attribs.push(element.attributes[i])
-  return attribs
-}
-
-function mapName(nodeName) {
-  return NAME_MAP[nodeName.toLowerCase()] || nodeName
-}
-},{"./parse-attribs":28,"xml-parse-from-string":38}],28:[function(require,module,exports){
-//Some versions of GlyphDesigner have a typo
-//that causes some bugs with parsing. 
-//Need to confirm with recent version of the software
-//to see whether this is still an issue or not.
-var GLYPH_DESIGNER_ERROR = 'chasrset'
-
-module.exports = function parseAttributes(obj) {
-  if (GLYPH_DESIGNER_ERROR in obj) {
-    obj['charset'] = obj[GLYPH_DESIGNER_ERROR]
-    delete obj[GLYPH_DESIGNER_ERROR]
-  }
-
-  for (var k in obj) {
-    if (k === 'face' || k === 'charset') 
-      continue
-    else if (k === 'padding' || k === 'spacing')
-      obj[k] = parseIntList(obj[k])
-    else
-      obj[k] = parseInt(obj[k], 10) 
-  }
-  return obj
-}
-
-function parseIntList(data) {
-  return data.split(',').map(function(val) {
-    return parseInt(val, 10)
-  })
-}
-},{}],29:[function(require,module,exports){
-var trim = require('trim')
-  , forEach = require('for-each')
-  , isArray = function(arg) {
-      return Object.prototype.toString.call(arg) === '[object Array]';
-    }
-
-module.exports = function (headers) {
-  if (!headers)
-    return {}
-
-  var result = {}
-
-  forEach(
-      trim(headers).split('\n')
-    , function (row) {
-        var index = row.indexOf(':')
-          , key = trim(row.slice(0, index)).toLowerCase()
-          , value = trim(row.slice(index + 1))
-
-        if (typeof(result[key]) === 'undefined') {
-          result[key] = value
-        } else if (isArray(result[key])) {
-          result[key].push(value)
-        } else {
-          result[key] = [ result[key], value ]
-        }
-      }
-  )
-
-  return result
-}
-},{"for-each":14,"trim":35}],30:[function(require,module,exports){
-var dtype = require('dtype')
-var anArray = require('an-array')
-var isBuffer = require('is-buffer')
-
-var CW = [0, 2, 3]
-var CCW = [2, 1, 3]
-
-module.exports = function createQuadElements(array, opt) {
-    //if user didn't specify an output array
-    if (!array || !(anArray(array) || isBuffer(array))) {
-        opt = array || {}
-        array = null
-    }
-
-    if (typeof opt === 'number') //backwards-compatible
-        opt = { count: opt }
-    else
-        opt = opt || {}
-
-    var type = typeof opt.type === 'string' ? opt.type : 'uint16'
-    var count = typeof opt.count === 'number' ? opt.count : 1
-    var start = (opt.start || 0) 
-
-    var dir = opt.clockwise !== false ? CW : CCW,
-        a = dir[0], 
-        b = dir[1],
-        c = dir[2]
-
-    var numIndices = count * 6
-
-    var indices = array || new (dtype(type))(numIndices)
-    for (var i = 0, j = 0; i < numIndices; i += 6, j += 4) {
-        var x = i + start
-        indices[x + 0] = j + 0
-        indices[x + 1] = j + 1
-        indices[x + 2] = j + 2
-        indices[x + 3] = j + a
-        indices[x + 4] = j + b
-        indices[x + 5] = j + c
-    }
-    return indices
-}
-},{"an-array":6,"dtype":12,"is-buffer":19}],31:[function(require,module,exports){
-var createLayout = require('layout-bmfont-text')
-var inherits = require('inherits')
-var createIndices = require('quad-indices')
-var buffer = require('three-buffer-vertex-data')
-var assign = require('object-assign')
-
-var vertices = require('./lib/vertices')
-var utils = require('./lib/utils')
-
-var Base = THREE.BufferGeometry
-
-module.exports = function createTextGeometry (opt) {
-  return new TextGeometry(opt)
-}
-
-function TextGeometry (opt) {
-  Base.call(this)
-
-  if (typeof opt === 'string') {
-    opt = { text: opt }
-  }
-
-  // use these as default values for any subsequent
-  // calls to update()
-  this._opt = assign({}, opt)
-
-  // also do an initial setup...
-  if (opt) this.update(opt)
-}
-
-inherits(TextGeometry, Base)
-
-TextGeometry.prototype.update = function (opt) {
-  if (typeof opt === 'string') {
-    opt = { text: opt }
-  }
-
-  // use constructor defaults
-  opt = assign({}, this._opt, opt)
-
-  if (!opt.font) {
-    throw new TypeError('must specify a { font } in options')
-  }
-
-  this.layout = createLayout(opt)
-
-  // get vec2 texcoords
-  var flipY = opt.flipY !== false
-
-  // the desired BMFont data
-  var font = opt.font
-
-  // determine texture size from font file
-  var texWidth = font.common.scaleW
-  var texHeight = font.common.scaleH
-
-  // get visible glyphs
-  var glyphs = this.layout.glyphs.filter(function (glyph) {
-    var bitmap = glyph.data
-    return bitmap.width * bitmap.height > 0
-  })
-
-  // provide visible glyphs for convenience
-  this.visibleGlyphs = glyphs
-
-  // get common vertex data
-  var positions = vertices.positions(glyphs)
-  var uvs = vertices.uvs(glyphs, texWidth, texHeight, flipY)
-  var indices = createIndices({
-    clockwise: true,
-    type: 'uint16',
-    count: glyphs.length
-  })
-
-  // update vertex data
-  buffer.index(this, indices, 1, 'uint16')
-  buffer.attr(this, 'position', positions, 2)
-  buffer.attr(this, 'uv', uvs, 2)
-
-  // update multipage data
-  if (!opt.multipage && 'page' in this.attributes) {
-    // disable multipage rendering
-    this.removeAttribute('page')
-  } else if (opt.multipage) {
-    var pages = vertices.pages(glyphs)
-    // enable multipage rendering
-    buffer.attr(this, 'page', pages, 1)
-  }
-}
-
-TextGeometry.prototype.computeBoundingSphere = function () {
-  if (this.boundingSphere === null) {
-    this.boundingSphere = new THREE.Sphere()
-  }
-
-  var positions = this.attributes.position.array
-  var itemSize = this.attributes.position.itemSize
-  if (!positions || !itemSize || positions.length < 2) {
-    this.boundingSphere.radius = 0
-    this.boundingSphere.center.set(0, 0, 0)
-    return
-  }
-  utils.computeSphere(positions, this.boundingSphere)
-  if (isNaN(this.boundingSphere.radius)) {
-    console.error('THREE.BufferGeometry.computeBoundingSphere(): ' +
-      'Computed radius is NaN. The ' +
-      '"position" attribute is likely to have NaN values.')
-  }
-}
-
-TextGeometry.prototype.computeBoundingBox = function () {
-  if (this.boundingBox === null) {
-    this.boundingBox = new THREE.Box3()
-  }
-
-  var bbox = this.boundingBox
-  var positions = this.attributes.position.array
-  var itemSize = this.attributes.position.itemSize
-  if (!positions || !itemSize || positions.length < 2) {
-    bbox.makeEmpty()
-    return
-  }
-  utils.computeBox(positions, bbox)
-}
-
-},{"./lib/utils":32,"./lib/vertices":33,"inherits":18,"layout-bmfont-text":21,"object-assign":24,"quad-indices":30,"three-buffer-vertex-data":34}],32:[function(require,module,exports){
-var itemSize = 2
-var box = { min: [0, 0], max: [0, 0] }
-
-function bounds (positions) {
-  var count = positions.length / itemSize
-  box.min[0] = positions[0]
-  box.min[1] = positions[1]
-  box.max[0] = positions[0]
-  box.max[1] = positions[1]
-
-  for (var i = 0; i < count; i++) {
-    var x = positions[i * itemSize + 0]
-    var y = positions[i * itemSize + 1]
-    box.min[0] = Math.min(x, box.min[0])
-    box.min[1] = Math.min(y, box.min[1])
-    box.max[0] = Math.max(x, box.max[0])
-    box.max[1] = Math.max(y, box.max[1])
-  }
-}
-
-module.exports.computeBox = function (positions, output) {
-  bounds(positions)
-  output.min.set(box.min[0], box.min[1], 0)
-  output.max.set(box.max[0], box.max[1], 0)
-}
-
-module.exports.computeSphere = function (positions, output) {
-  bounds(positions)
-  var minX = box.min[0]
-  var minY = box.min[1]
-  var maxX = box.max[0]
-  var maxY = box.max[1]
-  var width = maxX - minX
-  var height = maxY - minY
-  var length = Math.sqrt(width * width + height * height)
-  output.center.set(minX + width / 2, minY + height / 2, 0)
-  output.radius = length / 2
-}
-
 },{}],33:[function(require,module,exports){
-module.exports.pages = function pages (glyphs) {
-  var pages = new Float32Array(glyphs.length * 4 * 1)
-  var i = 0
-  glyphs.forEach(function (glyph) {
-    var id = glyph.data.page || 0
-    pages[i++] = id
-    pages[i++] = id
-    pages[i++] = id
-    pages[i++] = id
-  })
-  return pages
-}
-
-module.exports.uvs = function uvs (glyphs, texWidth, texHeight, flipY) {
-  var uvs = new Float32Array(glyphs.length * 4 * 2)
-  var i = 0
-  glyphs.forEach(function (glyph) {
-    var bitmap = glyph.data
-    var bw = (bitmap.x + bitmap.width)
-    var bh = (bitmap.y + bitmap.height)
-
-    // top left position
-    var u0 = bitmap.x / texWidth
-    var v1 = bitmap.y / texHeight
-    var u1 = bw / texWidth
-    var v0 = bh / texHeight
-
-    if (flipY) {
-      v1 = (texHeight - bitmap.y) / texHeight
-      v0 = (texHeight - bh) / texHeight
-    }
-
-    // BL
-    uvs[i++] = u0
-    uvs[i++] = v1
-    // TL
-    uvs[i++] = u0
-    uvs[i++] = v0
-    // TR
-    uvs[i++] = u1
-    uvs[i++] = v0
-    // BR
-    uvs[i++] = u1
-    uvs[i++] = v1
-  })
-  return uvs
-}
-
-module.exports.positions = function positions (glyphs) {
-  var positions = new Float32Array(glyphs.length * 4 * 2)
-  var i = 0
-  glyphs.forEach(function (glyph) {
-    var bitmap = glyph.data
-
-    // bottom left position
-    var x = glyph.position[0] + bitmap.xoffset
-    var y = glyph.position[1] + bitmap.yoffset
-
-    // quad size
-    var w = bitmap.width
-    var h = bitmap.height
-
-    // BL
-    positions[i++] = x
-    positions[i++] = y
-    // TL
-    positions[i++] = x
-    positions[i++] = y + h
-    // TR
-    positions[i++] = x + w
-    positions[i++] = y + h
-    // BR
-    positions[i++] = x + w
-    positions[i++] = y
-  })
-  return positions
-}
-
-},{}],34:[function(require,module,exports){
-var flatten = require('flatten-vertex-data')
-
-module.exports.attr = setAttribute
-module.exports.index = setIndex
-
-function setIndex (geometry, data, itemSize, dtype) {
-  if (typeof itemSize !== 'number') itemSize = 1
-  if (typeof dtype !== 'string') dtype = 'uint16'
-
-  var isR69 = !geometry.index && typeof geometry.setIndex !== 'function'
-  var attrib = isR69 ? geometry.getAttribute('index') : geometry.index
-  var newAttrib = updateAttribute(attrib, data, itemSize, dtype)
-  if (newAttrib) {
-    if (isR69) geometry.addAttribute('index', newAttrib)
-    else geometry.index = newAttrib
-  }
-}
-
-function setAttribute (geometry, key, data, itemSize, dtype) {
-  if (typeof itemSize !== 'number') itemSize = 3
-  if (typeof dtype !== 'string') dtype = 'float32'
-  if (Array.isArray(data) &&
-    Array.isArray(data[0]) &&
-    data[0].length !== itemSize) {
-    throw new Error('Nested vertex array has unexpected size; expected ' +
-      itemSize + ' but found ' + data[0].length)
-  }
-
-  var attrib = geometry.getAttribute(key)
-  var newAttrib = updateAttribute(attrib, data, itemSize, dtype)
-  if (newAttrib) {
-    geometry.addAttribute(key, newAttrib)
-  }
-}
-
-function updateAttribute (attrib, data, itemSize, dtype) {
-  data = data || []
-  if (!attrib || rebuildAttribute(attrib, data, itemSize)) {
-    // create a new array with desired type
-    data = flatten(data, dtype)
-    attrib = new THREE.BufferAttribute(data, itemSize)
-    attrib.needsUpdate = true
-    return attrib
-  } else {
-    // copy data into the existing array
-    flatten(data, attrib.array)
-    attrib.needsUpdate = true
-    return null
-  }
-}
-
-// Test whether the attribute needs to be re-created,
-// returns false if we can re-use it as-is.
-function rebuildAttribute (attrib, data, itemSize) {
-  if (attrib.itemSize !== itemSize) return true
-  if (!attrib.array) return true
-  var attribLength = attrib.array.length
-  if (Array.isArray(data) && Array.isArray(data[0])) {
-    // [ [ x, y, z ] ]
-    return attribLength !== data.length * itemSize
-  } else {
-    // [ x, y, z ]
-    return attribLength !== data.length
-  }
-  return false
-}
-
-},{"flatten-vertex-data":13}],35:[function(require,module,exports){
-
-exports = module.exports = trim;
-
-function trim(str){
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  return str.replace(/\s*$/, '');
-};
-
-},{}],36:[function(require,module,exports){
 var newline = /\n/
 var newlineChar = '\n'
 var whitespace = /\s/
@@ -71632,290 +71652,260 @@ function monospace(text, start, end, width) {
         end: start+glyphs
     }
 }
+},{}],34:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24}],35:[function(require,module,exports){
+var dtype = require('dtype')
+var anArray = require('an-array')
+var isBuffer = require('is-buffer')
+
+var CW = [0, 2, 3]
+var CCW = [2, 1, 3]
+
+module.exports = function createQuadElements(array, opt) {
+    //if user didn't specify an output array
+    if (!array || !(anArray(array) || isBuffer(array))) {
+        opt = array || {}
+        array = null
+    }
+
+    if (typeof opt === 'number') //backwards-compatible
+        opt = { count: opt }
+    else
+        opt = opt || {}
+
+    var type = typeof opt.type === 'string' ? opt.type : 'uint16'
+    var count = typeof opt.count === 'number' ? opt.count : 1
+    var start = (opt.start || 0) 
+
+    var dir = opt.clockwise !== false ? CW : CCW,
+        a = dir[0], 
+        b = dir[1],
+        c = dir[2]
+
+    var numIndices = count * 6
+
+    var indices = array || new (dtype(type))(numIndices)
+    for (var i = 0, j = 0; i < numIndices; i += 6, j += 4) {
+        var x = i + start
+        indices[x + 0] = j + 0
+        indices[x + 1] = j + 1
+        indices[x + 2] = j + 2
+        indices[x + 3] = j + a
+        indices[x + 4] = j + b
+        indices[x + 5] = j + c
+    }
+    return indices
+}
+},{"an-array":36,"dtype":37,"is-buffer":38}],36:[function(require,module,exports){
+var str = Object.prototype.toString
+
+module.exports = anArray
+
+function anArray(arr) {
+  return (
+       arr.BYTES_PER_ELEMENT
+    && str.call(arr.buffer) === '[object ArrayBuffer]'
+    || Array.isArray(arr)
+  )
+}
+
 },{}],37:[function(require,module,exports){
-"use strict";
-var window = require("global/window")
-var isFunction = require("is-function")
-var parseHeaders = require("parse-headers")
-var xtend = require("xtend")
-
-module.exports = createXHR
-createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
-createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
-
-forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
-    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
-        options = initParams(uri, options, callback)
-        options.method = method.toUpperCase()
-        return _createXHR(options)
-    }
-})
-
-function forEachArray(array, iterator) {
-    for (var i = 0; i < array.length; i++) {
-        iterator(array[i])
-    }
-}
-
-function isEmpty(obj){
-    for(var i in obj){
-        if(obj.hasOwnProperty(i)) return false
-    }
-    return true
-}
-
-function initParams(uri, options, callback) {
-    var params = uri
-
-    if (isFunction(options)) {
-        callback = options
-        if (typeof uri === "string") {
-            params = {uri:uri}
-        }
-    } else {
-        params = xtend(options, {uri: uri})
-    }
-
-    params.callback = callback
-    return params
-}
-
-function createXHR(uri, options, callback) {
-    options = initParams(uri, options, callback)
-    return _createXHR(options)
-}
-
-function _createXHR(options) {
-    if(typeof options.callback === "undefined"){
-        throw new Error("callback argument missing")
-    }
-
-    var called = false
-    var callback = function cbOnce(err, response, body){
-        if(!called){
-            called = true
-            options.callback(err, response, body)
-        }
-    }
-
-    function readystatechange() {
-        if (xhr.readyState === 4) {
-            loadFunc()
-        }
-    }
-
-    function getBody() {
-        // Chrome with requestType=blob throws errors arround when even testing access to responseText
-        var body = undefined
-
-        if (xhr.response) {
-            body = xhr.response
-        } else {
-            body = xhr.responseText || getXml(xhr)
-        }
-
-        if (isJson) {
-            try {
-                body = JSON.parse(body)
-            } catch (e) {}
-        }
-
-        return body
-    }
-
-    var failureResponse = {
-                body: undefined,
-                headers: {},
-                statusCode: 0,
-                method: method,
-                url: uri,
-                rawRequest: xhr
-            }
-
-    function errorFunc(evt) {
-        clearTimeout(timeoutTimer)
-        if(!(evt instanceof Error)){
-            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") )
-        }
-        evt.statusCode = 0
-        return callback(evt, failureResponse)
-    }
-
-    // will load the data & process the response in a special response object
-    function loadFunc() {
-        if (aborted) return
-        var status
-        clearTimeout(timeoutTimer)
-        if(options.useXDR && xhr.status===undefined) {
-            //IE8 CORS GET successful response doesn't have a status field, but body is fine
-            status = 200
-        } else {
-            status = (xhr.status === 1223 ? 204 : xhr.status)
-        }
-        var response = failureResponse
-        var err = null
-
-        if (status !== 0){
-            response = {
-                body: getBody(),
-                statusCode: status,
-                method: method,
-                headers: {},
-                url: uri,
-                rawRequest: xhr
-            }
-            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
-                response.headers = parseHeaders(xhr.getAllResponseHeaders())
-            }
-        } else {
-            err = new Error("Internal XMLHttpRequest Error")
-        }
-        return callback(err, response, response.body)
-    }
-
-    var xhr = options.xhr || null
-
-    if (!xhr) {
-        if (options.cors || options.useXDR) {
-            xhr = new createXHR.XDomainRequest()
-        }else{
-            xhr = new createXHR.XMLHttpRequest()
-        }
-    }
-
-    var key
-    var aborted
-    var uri = xhr.url = options.uri || options.url
-    var method = xhr.method = options.method || "GET"
-    var body = options.body || options.data || null
-    var headers = xhr.headers = options.headers || {}
-    var sync = !!options.sync
-    var isJson = false
-    var timeoutTimer
-
-    if ("json" in options) {
-        isJson = true
-        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
-        if (method !== "GET" && method !== "HEAD") {
-            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json") //Don't override existing accept header declared by user
-            body = JSON.stringify(options.json)
-        }
-    }
-
-    xhr.onreadystatechange = readystatechange
-    xhr.onload = loadFunc
-    xhr.onerror = errorFunc
-    // IE9 must have onprogress be set to a unique function.
-    xhr.onprogress = function () {
-        // IE must die
-    }
-    xhr.ontimeout = errorFunc
-    xhr.open(method, uri, !sync, options.username, options.password)
-    //has to be after open
-    if(!sync) {
-        xhr.withCredentials = !!options.withCredentials
-    }
-    // Cannot set timeout with sync request
-    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
-    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
-    if (!sync && options.timeout > 0 ) {
-        timeoutTimer = setTimeout(function(){
-            aborted=true//IE9 may still call readystatechange
-            xhr.abort("timeout")
-            var e = new Error("XMLHttpRequest timeout")
-            e.code = "ETIMEDOUT"
-            errorFunc(e)
-        }, options.timeout )
-    }
-
-    if (xhr.setRequestHeader) {
-        for(key in headers){
-            if(headers.hasOwnProperty(key)){
-                xhr.setRequestHeader(key, headers[key])
-            }
-        }
-    } else if (options.headers && !isEmpty(options.headers)) {
-        throw new Error("Headers cannot be set on an XDomainRequest object")
-    }
-
-    if ("responseType" in options) {
-        xhr.responseType = options.responseType
-    }
-
-    if ("beforeSend" in options &&
-        typeof options.beforeSend === "function"
-    ) {
-        options.beforeSend(xhr)
-    }
-
-    xhr.send(body)
-
-    return xhr
-
-
-}
-
-function getXml(xhr) {
-    if (xhr.responseType === "document") {
-        return xhr.responseXML
-    }
-    var firefoxBugTakenEffect = xhr.status === 204 && xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
-    if (xhr.responseType === "" && !firefoxBugTakenEffect) {
-        return xhr.responseXML
-    }
-
-    return null
-}
-
-function noop() {}
-
-},{"global/window":15,"is-function":20,"parse-headers":29,"xtend":39}],38:[function(require,module,exports){
-module.exports = (function xmlparser() {
-  //common browsers
-  if (typeof window.DOMParser !== 'undefined') {
-    return function(str) {
-      var parser = new window.DOMParser()
-      return parser.parseFromString(str, 'application/xml')
-    }
-  } 
-
-  //IE8 fallback
-  if (typeof window.ActiveXObject !== 'undefined'
-      && new window.ActiveXObject('Microsoft.XMLDOM')) {
-    return function(str) {
-      var xmlDoc = new window.ActiveXObject("Microsoft.XMLDOM")
-      xmlDoc.async = "false"
-      xmlDoc.loadXML(str)
-      return xmlDoc
-    }
+module.exports = function(dtype) {
+  switch (dtype) {
+    case 'int8':
+      return Int8Array
+    case 'int16':
+      return Int16Array
+    case 'int32':
+      return Int32Array
+    case 'uint8':
+      return Uint8Array
+    case 'uint16':
+      return Uint16Array
+    case 'uint32':
+      return Uint32Array
+    case 'float32':
+      return Float32Array
+    case 'float64':
+      return Float64Array
+    case 'array':
+      return Array
+    case 'uint8_clamped':
+      return Uint8ClampedArray
   }
+}
 
-  //last resort fallback
-  return function(str) {
-    var div = document.createElement('div')
-    div.innerHTML = str
-    return div
-  }
-})()
+},{}],38:[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
 },{}],39:[function(require,module,exports){
-module.exports = extend
+var flatten = require('flatten-vertex-data')
+var warned = false;
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
+module.exports.attr = setAttribute
+module.exports.index = setIndex
 
-function extend() {
-    var target = {}
+function setIndex (geometry, data, itemSize, dtype) {
+  if (typeof itemSize !== 'number') itemSize = 1
+  if (typeof dtype !== 'string') dtype = 'uint16'
 
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
+  var isR69 = !geometry.index && typeof geometry.setIndex !== 'function'
+  var attrib = isR69 ? geometry.getAttribute('index') : geometry.index
+  var newAttrib = updateAttribute(attrib, data, itemSize, dtype)
+  if (newAttrib) {
+    if (isR69) geometry.addAttribute('index', newAttrib)
+    else geometry.index = newAttrib
+  }
 }
 
-},{}]},{},[1]);
+function setAttribute (geometry, key, data, itemSize, dtype) {
+  if (typeof itemSize !== 'number') itemSize = 3
+  if (typeof dtype !== 'string') dtype = 'float32'
+  if (Array.isArray(data) &&
+    Array.isArray(data[0]) &&
+    data[0].length !== itemSize) {
+    throw new Error('Nested vertex array has unexpected size; expected ' +
+      itemSize + ' but found ' + data[0].length)
+  }
+
+  var attrib = geometry.getAttribute(key)
+  var newAttrib = updateAttribute(attrib, data, itemSize, dtype)
+  if (newAttrib) {
+    geometry.addAttribute(key, newAttrib)
+  }
+}
+
+function updateAttribute (attrib, data, itemSize, dtype) {
+  data = data || []
+  if (!attrib || rebuildAttribute(attrib, data, itemSize)) {
+    // create a new array with desired type
+    data = flatten(data, dtype)
+
+    var needsNewBuffer = attrib && typeof attrib.setArray !== 'function'
+    if (!attrib || needsNewBuffer) {
+      // We are on an old version of ThreeJS which can't
+      // support growing / shrinking buffers, so we need
+      // to build a new buffer
+      if (needsNewBuffer && !warned) {
+        warned = true
+        console.warn([
+          'A WebGL buffer is being updated with a new size or itemSize, ',
+          'however this version of ThreeJS only supports fixed-size buffers.',
+          '\nThe old buffer may still be kept in memory.\n',
+          'To avoid memory leaks, it is recommended that you dispose ',
+          'your geometries and create new ones, or update to ThreeJS r82 or newer.\n',
+          'See here for discussion:\n',
+          'https://github.com/mrdoob/three.js/pull/9631'
+        ].join(''))
+      }
+
+      // Build a new attribute
+      attrib = new THREE.BufferAttribute(data, itemSize);
+    }
+
+    attrib.itemSize = itemSize
+    attrib.needsUpdate = true
+
+    // New versions of ThreeJS suggest using setArray
+    // to change the data. It will use bufferData internally,
+    // so you can change the array size without any issues
+    if (typeof attrib.setArray === 'function') {
+      attrib.setArray(data)
+    }
+
+    return attrib
+  } else {
+    // copy data into the existing array
+    flatten(data, attrib.array)
+    attrib.needsUpdate = true
+    return null
+  }
+}
+
+// Test whether the attribute needs to be re-created,
+// returns false if we can re-use it as-is.
+function rebuildAttribute (attrib, data, itemSize) {
+  if (attrib.itemSize !== itemSize) return true
+  if (!attrib.array) return true
+  var attribLength = attrib.array.length
+  if (Array.isArray(data) && Array.isArray(data[0])) {
+    // [ [ x, y, z ] ]
+    return attribLength !== data.length * itemSize
+  } else {
+    // [ x, y, z ]
+    return attribLength !== data.length
+  }
+  return false
+}
+
+},{"flatten-vertex-data":40}],40:[function(require,module,exports){
+/*eslint new-cap:0*/
+var dtype = require('dtype')
+module.exports = flattenVertexData
+function flattenVertexData (data, output, offset) {
+  if (!data) throw new TypeError('must specify data as first parameter')
+  offset = +(offset || 0) | 0
+
+  if (Array.isArray(data) && Array.isArray(data[0])) {
+    var dim = data[0].length
+    var length = data.length * dim
+
+    // no output specified, create a new typed array
+    if (!output || typeof output === 'string') {
+      output = new (dtype(output || 'float32'))(length + offset)
+    }
+
+    var dstLength = output.length - offset
+    if (length !== dstLength) {
+      throw new Error('source length ' + length + ' (' + dim + 'x' + data.length + ')' +
+        ' does not match destination length ' + dstLength)
+    }
+
+    for (var i = 0, k = offset; i < data.length; i++) {
+      for (var j = 0; j < dim; j++) {
+        output[k++] = data[i][j]
+      }
+    }
+  } else {
+    if (!output || typeof output === 'string') {
+      // no output, create a new one
+      var Ctor = dtype(output || 'float32')
+      if (offset === 0) {
+        output = new Ctor(data)
+      } else {
+        output = new Ctor(data.length + offset)
+        output.set(data, offset)
+      }
+    } else {
+      // store output in existing array
+      output.set(data, offset)
+    }
+  }
+
+  return output
+}
+
+},{"dtype":41}],41:[function(require,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"dup":37}]},{},[1]);
