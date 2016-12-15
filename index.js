@@ -52,6 +52,14 @@ AFRAME.registerComponent('bmfont-text', {
     opacity: {
       type: 'number',
       default: '1.0'
+    },
+    anchor: {
+      type: 'string',
+      default: 'left' // for compatibility; if 'align', null or undefined, same as align
+    },
+    textscale: {
+      type: 'number',
+      default: 0.005
     }
   },
 
@@ -97,14 +105,21 @@ AFRAME.registerComponent('bmfont-text', {
         opacity: data.opacity
       }));
 
+      var textScale = -data.textscale;
+
       var text = new THREE.Mesh(geometry, material);
 
       // Rotate so text faces the camera
       text.rotation.y = Math.PI;
 
       // Scale text down
-      text.scale.multiplyScalar(-0.005);
+      text.scale.multiplyScalar(textScale);
 
+      // Position based on anchor value
+      var anchor = data.anchor === 'align' ? data.align : data.anchor || data.align;
+      if (anchor === 'center' || anchor === 'right') {
+          text.position.x += data.width * textScale * (anchor === 'center' ? 0.5 : 1);
+      }
       // Register text mesh under entity's object3DMap
       el.setObject3D('bmfont-text', text);
     }

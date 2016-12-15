@@ -8,18 +8,20 @@ This component is useful for rendering bitmap and signed distance field font tex
 
 ## Properties
 
-|    Property   |          Description         |     Default Value     |
-|:-------------:|:----------------------------:|:---------------------:|
-|      text     |  the text you want to appear |          None         |
-|     width     |     width of the text box    |          None         |
-|     align     |   'left', 'center', 'right'  |          left         |
-| letterSpacing | the letter spacing in pixels |           0           |
-|   lineHeight  |   the line height in pixels  |           38          |
-|      fnt      |      path to 'fnt' file      | https://cdn.rawgit... |
-|    fntImage   |    path to font image file   | https://cdn.rawgit... |
-|      mode     |      'pre' and 'nowrap'      |        'normal'       |
-|     color     |     by RGB, hex, or name     |          #000         |
-|    opacity    |    Extent of transparency.   |          1.0          |
+|    Property   |             Description            |     Default Value     |
+|:-------------:|:----------------------------------:|:---------------------:|
+|      text     |     the text you want to appear    |          None         |
+|     width     |        width of the text box       |          None         |
+|     align     |      'left', 'center', 'right'     |          left         |
+| letterSpacing |    the letter spacing in pixels    |           0           |
+|   lineHeight  |      the line height in pixels     |           38          |
+|      fnt      |         path to 'fnt' file         | https://cdn.rawgit... |
+|    fntImage   |       path to font image file      | https://cdn.rawgit... |
+|      mode     |         'pre' and 'nowrap'         |        'normal'       |
+|     color     |        by RGB, hex, or name        |          #000         |
+|    opacity    |       Extent of transparency.      |          1.0          |
+|     anchor    | 'left', 'center', 'right', 'align' |          1.0          |
+|   textscale   |          text scale factor         |         0.005         |
 
 More details on these properties [here](https://github.com/Jam3/three-bmfont-text#usage).
 
@@ -33,9 +35,20 @@ Write some text:
 <a-entity bmfont-text="text: Hello World;"></a-entity>
 ```
 
-To change the size of the text, use the [scale](https://aframe.io/docs/0.2.0/components/scale.html) component or position the text closer or further away.
+The effective width of the entity in A-Frame is 'width' * 'textscale'.
 
-Text can be wrapped by specifying width, but I'm not sure what units three-bmfont-text uses. You will have to play around a bit.
+To change the size of the text,
+- use the [scale](https://aframe.io/docs/0.2.0/components/scale.html) component
+- position the text closer or further away.
+- change 'textscale' which will change the entity dimensions unless `width` is also adjusted to match
+
+Text can be wrapped by specifying width.
+
+To change how A-Frame position is used to place the entity, use the 'anchor' property.
+For example, this will center the entity around its A-Frame position, rather than aligning to left edge:
+```html
+<a-entity bmfont-text="text: Hello World; anchor:center"></a-entity>
+```
 
 ## Custom Fonts
 

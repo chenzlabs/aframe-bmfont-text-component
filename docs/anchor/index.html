@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <title>A-Frame BMFont Text Component - Anchor</title>
+    <script src="../build.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <a-assets></a-assets>
+
+      <a-entity position="0.0 3.8 1.5">
+        <a-entity camera look-controls wasd-controls></a-entity>
+      </a-entity>
+
+      <a-entity position="0 0 -4"
+                geometry="primitive: sphere"
+                material="color: #C03546">
+      </a-entity>
+
+      <a-entity position="0 1 -4"
+                bmfont-text="color: white; anchor: left;
+                             text:
+anchor='left' align='left' (default)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 2 -4"
+                bmfont-text="color: white; anchor: center;
+                             text:
+anchor='center' align='left' (default)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 3 -4"
+                bmfont-text="color: white; anchor: right;
+                             text:
+anchor='right' align='left' (default)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 4 -4"
+                bmfont-text="color: white; align: left;
+                             text:
+align='left' (default anchor)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 5 -4"
+                bmfont-text="color: white; align: center;
+                             text:
+align='center' (default anchor)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 6 -4"
+                bmfont-text="color: white; align: right;
+                             text:
+align='right' (default anchor)
+123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-text position="0 7 -4"
+              color="white" align="center" textscale="0.01"
+              text="
+a-text align='center' (anchor='align') 
+textscale 0.01
+123456789012345678901234567890123456789012345678901234567890">
+      </a-text>
+
+      <a-sky color="black"></a-sky>
+    </a-scene>
+  </body>
+</html>
