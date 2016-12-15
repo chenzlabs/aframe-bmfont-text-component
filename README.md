@@ -16,7 +16,7 @@ This component is useful for rendering bitmap and signed distance field font tex
 | letterSpacing |    the letter spacing in pixels    |           0           |
 |   lineHeight  |      the line height in pixels     |           38          |
 |      fnt      |         path to 'fnt' file         | https://cdn.rawgit... |
-|    fntImage   |       path to font image file      | https://cdn.rawgit... |
+|    fntImage   |       path to font image file      | None (fnt, but .png)  |
 |      mode     |         'pre' and 'nowrap'         |        'normal'       |
 |     color     |        by RGB, hex, or name        |          #000         |
 |    opacity    |       Extent of transparency.      |          1.0          |
@@ -89,7 +89,7 @@ Install and use by directly including the [browser files](dist):
 <head>
   <title>My A-Frame Scene</title>
   <script src="https://aframe.io/releases/0.3.0/aframe.min.js"></script>
-  <script src="https://rawgit.com/bryik/aframe-bmfont-text-component/master/dist/aframe-bmfont-text-component.min.js"></script>
+  <script src="https://cdn.rawgit.com/chenzlabs/aframe-bmfont-text-component/release/dist/aframe-bmfont-text-component.min.js"></script>
 </head>
 
 <body>
