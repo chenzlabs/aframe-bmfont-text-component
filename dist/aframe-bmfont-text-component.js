@@ -4474,7 +4474,7 @@
 
 	AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
 	  defaultComponents: {
-	    'bmfont-text': {anchor: 'align'}
+	    'bmfont-text': {anchor: 'align', width: 5}
 	  },
 	  mappings: {
 	    text: 'bmfont-text.text',
