@@ -10,7 +10,7 @@ var meshMixin = AFRAME.primitives.getMeshMixin();
 
 AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
   defaultComponents: {
-    'bmfont-text': {anchor: 'align', width: 5}
+    'bmfont-text': {anchor: 'align'}
   },
   mappings: {
     text: 'bmfont-text.text',
@@ -25,6 +25,7 @@ AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
     color: 'bmfont-text.color',
     opacity: 'bmfont-text.opacity',
     anchor: 'bmfont-text.anchor',
-    textscale: 'bmfont-text.textscale',
+    wrapcount: 'bmfont-text.wrapcount',
+    wrappixels: 'bmfont-text.wrappixels'
   }
 }));

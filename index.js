@@ -9,6 +9,8 @@ var SDFShader = require('./lib/shaders/sdf');
 
 require('./extras/text-primitive.js'); // Register experimental text primitive
 
+var DEFAULT_WIDTH = 1; // 1 matches other AFRAME default widths... 5 matches prior bmfont examples etc.
+
 /**
  * bmfont text component for A-Frame.
  */
@@ -19,7 +21,7 @@ AFRAME.registerComponent('bmfont-text', {
     },
     width: { // use AFRAME units i.e. meters, not arbitrary numbers...
       type: 'number',
-      default: 5 // drop legacy width
+      // default to geometry width, or if not present then DEFAULT_WIDTH
     },
     height: { // use AFRAME units i.e. meters, not arbitrary numbers...
       type: 'number'
@@ -34,15 +36,16 @@ AFRAME.registerComponent('bmfont-text', {
       default: 0
     },
     lineHeight: {
-      type: 'number',
-      default: 38
+      type: 'number'
+      // default to font's lineHeight value
     },
     fnt: {
       type: 'string',
       default: 'https://cdn.rawgit.com/bryik/aframe-bmfont-text-component/aa0655cf90f646e12c40ab4708ea90b4686cfb45/assets/DejaVu-sdf.fnt'
     },
     fntImage: {
-      type: 'string',
+      type: 'string'
+      // default to fnt but with .fnt replaced by .png
     },
     mode: {
       type: 'string',
@@ -58,11 +61,15 @@ AFRAME.registerComponent('bmfont-text', {
     },
     anchor: {
       type: 'string',
-      default: 'left' // for compatibility; if 'align', null or undefined, same as align
+      default: 'center' // center default to match primitives like plane; if 'align', null or undefined, same as align
     },
-    textscale: {
+    wrappixels: {
+      type: 'number'
+      // if specified, units are bmfont pixels (e.g. DejaVu default is size 32) 
+    },
+    wrapcount: {
       type: 'number',
-      default: 0 // try no default and basing on computed width... default: 0.005
+      default: 40 // units are 0.6035 * font size e.g. about one default font character (monospace DejaVu size 32) 
     }
   },
 
@@ -82,13 +89,7 @@ AFRAME.registerComponent('bmfont-text', {
     }, start);
 
     function start(font, texture) {
-/*
-      var aframescale = 200; // legacy because textscale was hardcoded as 0.005
-      if (!data.width) { data.width = data.legacywidth / aframescale; }
-*/
-      var textrenderwidth = 1000; //2300; // gets 60 numbers in default font on same line
-//      var width = data.aframewidth ? data.aframewidth * aframescale : data.width;
-//      console.log('data.width = ' + data.width + ' aframewidth = ' + data.aframewidth + ' ==> width ' + width);
+      var textrenderwidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
 
       // Setup texture, should set anisotropy to user maximum...
       texture.needsUpdate = true;
@@ -100,7 +101,7 @@ AFRAME.registerComponent('bmfont-text', {
         width: textrenderwidth,
         align: data.align,
         letterSpacing: data.letterSpacing,
-        lineHeight: data.lineHeight,
+        lineHeight: data.lineHeight || font.common.lineHeight,
         mode: data.mode
       };
 
@@ -116,23 +117,18 @@ AFRAME.registerComponent('bmfont-text', {
         opacity: data.opacity
       }));
 
-      var textScale = data.width / textrenderwidth;
-      console.log('computed textScale ' + textScale);
-
+      // compute width, which we may inherit from geometry
+      var elgeo = el.getAttribute("geometry");
+      var width = data.width || (elgeo && elgeo.width) || DEFAULT_WIDTH;
       var text = new THREE.Mesh(geometry, material);
+      var textScale = width / textrenderwidth;
+      var height = textScale * geometry.layout.height;
 
-      // update to match text width and Y extent from layout
-      // is this even necessary? data.width = geometry.layout.width;
-      data.height = textScale * (geometry.layout.height + geometry.layout.descender);
-      console.log('layout object3D geometry ' + geometry.layout.width + 'x' + (geometry.layout.height + geometry.layout.descender));
-      console.log('text object3D geometry ' + data.width + 'x' + data.height);
-/*
-      // what is the right incantation?
-      if (el.components.geometry) {
-          el.components.geometry.data.height = data.height;
-          el.components.geometry.data.width = data.width;
+      // update geometry dimensions to match layout, if not specified
+      if (elgeo) {
+          if (!elgeo.width) { el.setAttribute("geometry", "width", width); }
+          if (!elgeo.height) { el.setAttribute("geometry", "height", height); }
       }
-*/
 
       // Rotate so text faces the camera
       text.rotation.y = Math.PI;
@@ -143,10 +139,11 @@ AFRAME.registerComponent('bmfont-text', {
       // Position based on anchor value
       var anchor = data.anchor === 'align' ? data.align : data.anchor || data.align;
       if (anchor.indexOf('left') < 0) {
-          text.position.x -= data.width * (anchor.indexOf('right') >= 0 ? 1 : 0.5);
+          text.position.x -= width * (anchor.indexOf('right') >= 0 ? 1 : 0.5);
       }
+      // TODO: if height was specified, factor that into anchor
       if (anchor.indexOf('bottom') < 0) {
-          text.position.y -= data.height * (anchor.indexOf('top') >= 0 ? 1 : 0.5);
+          text.position.y -= height * (anchor.indexOf('top') >= 0 ? 1 : 0.5);
       }
 
       // Register text mesh under entity's object3DMap

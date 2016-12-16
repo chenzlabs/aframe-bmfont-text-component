@@ -7,7 +7,7 @@
     <a-scene>
       <a-assets></a-assets>
 
-      <a-entity position="0.5 1.8 1.5">
+      <a-entity position="0 1.8 1.5">
         <a-entity camera look-controls wasd-controls></a-entity>
       </a-entity>
 
@@ -16,10 +16,14 @@
                 material="color: #C03546">
       </a-entity>
 
+      <!-- default DejaVu font is size 32, and characters are roughly 24 pixels wide -->
       <a-entity position="0 2 0"
+                geometry="primitive: plane; width: 1; height: 1"
+                material="color: red"
                 bmfont-text="text: Hello World;
                              color: white;
-                             width: 200">
+                             align: center;
+                             wrapcount: 5">
       </a-entity>
 
       <a-sky color="black"></a-sky>
