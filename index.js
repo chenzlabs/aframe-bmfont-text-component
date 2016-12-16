@@ -127,7 +127,7 @@ AFRAME.registerComponent('bmfont-text', {
       // update geometry dimensions to match layout, if not specified
       if (elgeo) {
           if (!elgeo.width) { el.setAttribute("geometry", "width", width); }
-          if (!elgeo.height) { el.setAttribute("geometry", "height", height); }
+          el.setAttribute("geometry", "height", height);
       }
 
       // Rotate so text faces the camera
