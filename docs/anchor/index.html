@@ -11,8 +11,8 @@
         <a-entity camera look-controls wasd-controls></a-entity>
       </a-entity>
 
-      <a-entity position="0 0 -4"
-                geometry="primitive: sphere"
+      <a-entity position="0 1 -4"
+                geometry="primitive: plane; width: 0.057; height: 0.057"
                 material="color: #C03546">
       </a-entity>
 
@@ -24,10 +24,20 @@ anchor='left' align='left' (default)
       </a-entity>
 
       <a-entity position="0 2 -4"
+                geometry="primitive: plane; width: 5; height: 0.57"
+                material="color: #C03546">
+      </a-entity>
+
+      <a-entity position="0 2 -4"
                 bmfont-text="color: white; anchor: center;
                              text:
 anchor='center' align='left' (default)
 123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 3 -4"
+                geometry="primitive: plane; width: 0.057; height: 0.057"
+                material="color: #C03546">
       </a-entity>
 
       <a-entity position="0 3 -4"
@@ -38,10 +48,20 @@ anchor='right' align='left' (default)
       </a-entity>
 
       <a-entity position="0 4 -4"
+                geometry="primitive: plane; width: 0.057; height: 0.057"
+                material="color: #C03546">
+      </a-entity>
+
+      <a-entity position="0 4 -4"
                 bmfont-text="color: white; align: left;
                              text:
 align='left' (default anchor)
 123456789012345678901234567890123456789012345678901234567890">
+      </a-entity>
+
+      <a-entity position="0 5 -4"
+                geometry="primitive: plane; width: 0.057; height: 0.057"
+                material="color: #C03546">
       </a-entity>
 
       <a-entity position="0 5 -4"
@@ -52,6 +72,11 @@ align='center' (default anchor)
       </a-entity>
 
       <a-entity position="0 6 -4"
+                geometry="primitive: plane; width: 0.057; height: 0.057"
+                material="color: #C03546">
+      </a-entity>
+
+      <a-entity position="0 6 -4"
                 bmfont-text="color: white; align: right;
                              text:
 align='right' (default anchor)
@@ -59,11 +84,15 @@ align='right' (default anchor)
       </a-entity>
 
       <a-text position="0 7 -4"
-              color="white" align="center" textscale="0.01"
-              text="
-a-text align='center' (anchor='align') 
-textscale 0.01
-123456789012345678901234567890123456789012345678901234567890">
+              geometry="primitive: plane; width: 10; height: 1.9"
+              aframewidth="10"
+              material="color: blue"
+              color="white"
+              align="center"
+              text=
+"a-text align='center' (anchor='align') 
+aframewidth 10 (double)
+123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890">
       </a-text>
 
       <a-sky color="black"></a-sky>

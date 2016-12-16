@@ -18,8 +18,16 @@ AFRAME.registerComponent('bmfont-text', {
       type: 'string'
     },
     width: {
+      type: 'number', 
+      //default: 1000 // no default, use aframe width if not provided
+    },
+    aframewidth: { // use AFRAME units i.e. meters, not arbitrary numbers...
       type: 'number',
-      default: 1000
+      default: 5 // no default, use legacy width if not provided
+    },
+    aframeheight: { // use AFRAME units i.e. meters, not arbitrary numbers...
+      type: 'number'
+      // no default, will be populated at layout
     },
     align: {
       type: 'string',
@@ -39,7 +47,6 @@ AFRAME.registerComponent('bmfont-text', {
     },
     fntImage: {
       type: 'string',
-      default: undefined
     },
     mode: {
       type: 'string',
@@ -59,7 +66,7 @@ AFRAME.registerComponent('bmfont-text', {
     },
     textscale: {
       type: 'number',
-      default: 0.005
+      default: 0 // try no default and basing on computed width... default: 0.005
     }
   },
 
@@ -78,7 +85,14 @@ AFRAME.registerComponent('bmfont-text', {
       image: (data.fntImage && data.fntImage.length) ? data.fntImage : data.fnt.replace('.fnt', '.png')
     }, start);
 
-    function start (font, texture) {
+    function start(font, texture) {
+      var aframescale = 200; // legacy because textscale was hardcoded as 0.005
+      if (!data.aframewidth) { data.aframewidth = data.width / aframescale; }
+
+      var textrenderwidth = 1000; //2300; // gets 60 numbers in default font on same line
+//      var width = data.aframewidth ? data.aframewidth * aframescale : data.width;
+//      console.log('data.width = ' + data.width + ' aframewidth = ' + data.aframewidth + ' ==> width ' + width);
+
       // Setup texture, should set anisotropy to user maximum...
       texture.needsUpdate = true;
       texture.anisotropy = 16;
@@ -86,7 +100,7 @@ AFRAME.registerComponent('bmfont-text', {
       var options = {
         font: font, // the bitmap font definition
         text: data.text, // the string to render
-        width: data.width,
+        width: textrenderwidth,
         align: data.align,
         letterSpacing: data.letterSpacing,
         lineHeight: data.lineHeight,
@@ -105,21 +119,39 @@ AFRAME.registerComponent('bmfont-text', {
         opacity: data.opacity
       }));
 
-      var textScale = -data.textscale;
+      var textScale = data.aframewidth / textrenderwidth;
+      console.log('computed textScale ' + textScale);
 
       var text = new THREE.Mesh(geometry, material);
+
+      // update to match text width and Y extent from layout
+      // is this even necessary? data.width = geometry.layout.width;
+      data.aframeheight = textScale * (geometry.layout.height + geometry.layout.descender);
+      console.log('layout object3D geometry ' + geometry.layout.width + 'x' + (geometry.layout.height + geometry.layout.descender));
+      console.log('text object3D geometry ' + data.aframewidth + 'x' + data.aframeheight);
+/*
+      // what is the right incantation?
+      if (el.components.geometry) {
+          el.components.geometry.data.height = data.aframeheight;
+          el.components.geometry.data.width = data.aframewidth;
+      }
+*/
 
       // Rotate so text faces the camera
       text.rotation.y = Math.PI;
 
       // Scale text down
-      text.scale.multiplyScalar(textScale);
+      text.scale.multiplyScalar(-textScale);
 
       // Position based on anchor value
       var anchor = data.anchor === 'align' ? data.align : data.anchor || data.align;
-      if (anchor === 'center' || anchor === 'right') {
-          text.position.x += data.width * textScale * (anchor === 'center' ? 0.5 : 1);
+      if (anchor.indexOf('left') < 0) {
+          text.position.x -= data.aframewidth * (anchor.indexOf('right') >= 0 ? 1 : 0.5);
       }
+      if (anchor.indexOf('bottom') < 0) {
+          text.position.y -= data.aframeheight * (anchor.indexOf('top') >= 0 ? 1 : 0.5);
+      }
+
       // Register text mesh under entity's object3DMap
       el.setObject3D('bmfont-text', text);
     }
