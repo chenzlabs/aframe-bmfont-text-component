@@ -17,15 +17,11 @@ AFRAME.registerComponent('bmfont-text', {
     text: {
       type: 'string'
     },
-    width: {
-      type: 'number', 
-      //default: 1000 // no default, use aframe width if not provided
-    },
-    aframewidth: { // use AFRAME units i.e. meters, not arbitrary numbers...
+    width: { // use AFRAME units i.e. meters, not arbitrary numbers...
       type: 'number',
-      default: 5 // no default, use legacy width if not provided
+      default: 5 // drop legacy width
     },
-    aframeheight: { // use AFRAME units i.e. meters, not arbitrary numbers...
+    height: { // use AFRAME units i.e. meters, not arbitrary numbers...
       type: 'number'
       // no default, will be populated at layout
     },
@@ -86,9 +82,10 @@ AFRAME.registerComponent('bmfont-text', {
     }, start);
 
     function start(font, texture) {
+/*
       var aframescale = 200; // legacy because textscale was hardcoded as 0.005
-      if (!data.aframewidth) { data.aframewidth = data.width / aframescale; }
-
+      if (!data.width) { data.width = data.legacywidth / aframescale; }
+*/
       var textrenderwidth = 1000; //2300; // gets 60 numbers in default font on same line
 //      var width = data.aframewidth ? data.aframewidth * aframescale : data.width;
 //      console.log('data.width = ' + data.width + ' aframewidth = ' + data.aframewidth + ' ==> width ' + width);
@@ -119,21 +116,21 @@ AFRAME.registerComponent('bmfont-text', {
         opacity: data.opacity
       }));
 
-      var textScale = data.aframewidth / textrenderwidth;
+      var textScale = data.width / textrenderwidth;
       console.log('computed textScale ' + textScale);
 
       var text = new THREE.Mesh(geometry, material);
 
       // update to match text width and Y extent from layout
       // is this even necessary? data.width = geometry.layout.width;
-      data.aframeheight = textScale * (geometry.layout.height + geometry.layout.descender);
+      data.height = textScale * (geometry.layout.height + geometry.layout.descender);
       console.log('layout object3D geometry ' + geometry.layout.width + 'x' + (geometry.layout.height + geometry.layout.descender));
-      console.log('text object3D geometry ' + data.aframewidth + 'x' + data.aframeheight);
+      console.log('text object3D geometry ' + data.width + 'x' + data.height);
 /*
       // what is the right incantation?
       if (el.components.geometry) {
-          el.components.geometry.data.height = data.aframeheight;
-          el.components.geometry.data.width = data.aframewidth;
+          el.components.geometry.data.height = data.height;
+          el.components.geometry.data.width = data.width;
       }
 */
 
@@ -146,10 +143,10 @@ AFRAME.registerComponent('bmfont-text', {
       // Position based on anchor value
       var anchor = data.anchor === 'align' ? data.align : data.anchor || data.align;
       if (anchor.indexOf('left') < 0) {
-          text.position.x -= data.aframewidth * (anchor.indexOf('right') >= 0 ? 1 : 0.5);
+          text.position.x -= data.width * (anchor.indexOf('right') >= 0 ? 1 : 0.5);
       }
       if (anchor.indexOf('bottom') < 0) {
-          text.position.y -= data.aframeheight * (anchor.indexOf('top') >= 0 ? 1 : 0.5);
+          text.position.y -= data.height * (anchor.indexOf('top') >= 0 ? 1 : 0.5);
       }
 
       // Register text mesh under entity's object3DMap

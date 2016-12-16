@@ -15,8 +15,7 @@ AFRAME.registerPrimitive('a-text', extendDeep({}, meshMixin, {
   mappings: {
     text: 'bmfont-text.text',
     width: 'bmfont-text.width',
-    aframewidth: 'bmfont-text.aframewidth',
-    aframeheight: 'bmfont-text.aframeheight',
+    height: 'bmfont-text.height',
     align: 'bmfont-text.align',
     letterspacing: 'bmfont-text.letterSpacing',
     lineheight: 'bmfont-text.lineHeight',
